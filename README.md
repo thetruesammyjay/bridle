@@ -6,7 +6,8 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue?style=flat-square)
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
 
-![Bridle Dashboard](bridle.png)
+![Bridle Dashboard Web View](bridle2.png)
+![Bridle Dashboard Mobile View](bridle-mobile.png)
 
 ---
 
@@ -29,8 +30,11 @@
 
 ```mermaid
 graph TB
-    subgraph Dashboard["Web Dashboard"]
-        UI["Real-time WebSocket Monitoring"]
+    subgraph Interfaces["Interfaces & Outputs"]
+        UI["Web Dashboard (Vanilla JS/Tailwind)"]
+        CLI["CLI Demo Tool"]
+        TG["Telegram Notifications"]
+        SDK["Bridle SDK (Event Emitter)"]
     end
 
     subgraph Server["Express + WS Server"]
@@ -52,16 +56,20 @@ graph TB
         W["Wallet (Encrypted KeyVault)"]
         AI["AI Engine (Gemini / Fallback)"]
         TE["Trading Engine"]
+        ANLY["Performance Analytics (P&L, Win Rate)"]
     end
 
-    subgraph Blockchain["Solana Devnet"]
-        RPC["JSON-RPC"]
-        TX["Transaction Signing & Confirmation"]
+    subgraph Blockchain["External Networks"]
+        RPC["Solana Devnet RPC"]
+        JUP["Jupiter Price API (Live Feeds)"]
     end
 
-    Dashboard -->|WebSocket| Server
+    UI -->|REST / WS| Server
+    CLI --> Manager
+    SDK --> Manager
     Server --> Manager
     Manager --> Agents
+    Manager -->|Push Alerts| TG
     Agents --> AgentInternals
     AgentInternals --> Blockchain
 ```

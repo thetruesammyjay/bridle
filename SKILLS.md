@@ -11,10 +11,12 @@ The platform is designed as a prototype for the [Superteam Nigeria DeFi Develope
 1. **Programmatic Wallet Creation** — Each agent generates its own Ed25519 keypair and stores it with AES-256-GCM encryption
 2. **Autonomous Fund Management** — Agents hold SOL and SPL tokens on Solana devnet, with balance tracking and airdrop support
 3. **AI-Powered Trading Decisions** — Google Gemini (2.5-flash-lite) analyzes market data, portfolio state, and risk profile to decide BUY/SELL/HOLD
-4. **Automatic Fallback** — When the LLM is rate-limited or unavailable, a rule-based engine (moving averages + momentum) takes over seamlessly
+4. **Automatic Fallback & Recovery** — Rule-based engine takes over when LLM is unavailable; agents use exponential backoff to recover from transient errors
 5. **Transaction Signing** — Agents sign and submit transactions to Solana devnet without human intervention
 6. **Policy Enforcement** — Per-agent spending limits, daily caps, token whitelists, and cooldown periods prevent runaway behavior
-7. **Full Audit Trail** — Every action is logged to append-only JSONL files for accountability
+7. **Performance Analytics** — Live tracking of agent Win Rate, Realized P&L, and decision distributions
+8. **Real-time Notifications** — Pushes live trade alerts, errors, and balance updates directly to a configured Telegram Bot
+9. **Full Audit Trail** — Every action is logged to append-only JSONL files for accountability
 
 ---
 
@@ -130,7 +132,7 @@ Each agent runs an autonomous loop every `AGENT_INTERVAL_MS`:
 
 ```mermaid
 flowchart TD
-    A["Query SOL Balance"] --> B["Fetch Market Data"]
+    A["Query SOL Balance"] --> B["Fetch Market Data (Jupiter API)"]
     B --> C{"Gemini Available?"}
     C -->|Yes| D["Send to Gemini LLM"]
     C -->|Rate Limited| E["Use Rule Engine"]
@@ -143,10 +145,14 @@ flowchart TD
     I --> J{"Policy Allows?"}
     J -->|Yes| K["Execute Trade on Solana"]
     J -->|No| L["Log Policy Violation"]
-    K --> M["Log to Audit Trail"]
+    K --> M["Log Setup & Calc P&L Analytics"]
     L --> M
     H --> M
-    M --> N["Wait for Interval"]
+    M --> TG["Push Telegram Notification"]
+    TG --> O{"Cycle Error?"}
+    O -->|Yes| P["Exponential Backoff (up to 5m)"]
+    O -->|No| N["Wait for Interval (30s)"]
+    P --> A
     N --> A
 ```
 

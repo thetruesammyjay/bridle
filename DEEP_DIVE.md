@@ -202,23 +202,23 @@ The Rule Engine uses:
 
 ```mermaid
 flowchart TD
-    P["Presentation — Dashboard + WebSocket"]
+    O["Outputs — Web Dashboard, CLI, Telegram, SDK"]
     A["Application — Agent Manager + REST API + WS Handler"]
-    D["Domain Logic — Agent + AI Engine + Trading Engine"]
-    S["Security — KeyVault + PolicyGuard + AuditLogger"]
+    D["Domain Logic — Agent + AI Engine + Trading + Analytics"]
+    S["Security & Recovery — KeyVault + PolicyGuard + AuditLogger + Backoff"]
     I["Infrastructure — WalletManager + JupiterClient + Solana RPC"]
 
-    P --> A --> D --> S --> I
+    O --> A --> D --> S --> I
 ```
 
 Each layer has a clear, single responsibility:
 
 | Layer | Module | Responsibility |
 |-------|--------|---------------|
-| **Presentation** | Dashboard, WebSocket | Display real-time agent activity |
+| **Outputs** | Dashboard, Telegram, CLI | Display real-time agent activity and push alerts |
 | **Application** | AgentManager, API, WSHandler | Orchestrate agent lifecycle and external communication |
-| **Domain** | Agent, AIEngine, TradingEngine | Business logic: decisions and trade execution |
-| **Security** | KeyVault, PolicyGuard, AuditLogger | Encryption, validation, and compliance |
+| **Domain** | Agent, AIEngine, TradingEngine, Analytics | Business logic: decisions, execution, and P&L tracking |
+| **Security** | KeyVault, PolicyGuard, AuditLogger | Encryption, validation, compliance, and error recovery |
 | **Infrastructure** | WalletManager, JupiterClient | Blockchain interaction and swap routing |
 
 This separation ensures that:
