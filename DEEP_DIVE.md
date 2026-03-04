@@ -198,7 +198,7 @@ The Rule Engine uses:
 
 ---
 
-## 4. Separation of Concerns
+## 8. Separation of Concerns
 
 ```mermaid
 flowchart TD
@@ -227,9 +227,59 @@ This separation ensures that:
 - The policy module can be independently audited
 - Each module can be tested, replaced, or upgraded independently
 
+## 5. Live Market Data
+
+Bridle fetches real-time prices from the **Jupiter Price API** (free, no API key required).
+
+### Data Flow
+
+```mermaid
+flowchart LR
+    JUP["Jupiter Price API"] -->|"SOL, USDC, BONK, RAY"| MDS["MarketDataService"]
+    MDS -->|"Live Prices"| AI["AI Engine"]
+    MDS -->|"Fallback"| SIM["Simulation Engine"]
+    SIM -->|"Simulated Prices"| AI
+```
+
+### How It Works
+
+1. **Primary**: Fetches live USD prices from `https://api.jup.ag/price/v2` using token mint addresses
+2. **Cache**: Results cached for 15 seconds to avoid excessive API calls
+3. **Timeout**: 5-second fetch timeout prevents the agent from hanging
+4. **Fallback**: If Jupiter is unreachable, seamlessly falls back to realistic price simulation
+5. **Indicator**: The CLI shows `LIVE` or `SIMULATED` so operators always know the data source
+
+### Supported Tokens
+
+| Token | Mint Address | Source |
+|-------|-------------|--------|
+| SOL | `So111...1112` | Jupiter Price API |
+| USDC | `EPjF...Dt1v` | Jupiter Price API |
+| BONK | `DezX...B263` | Jupiter Price API |
+| RAY | `4k3D...X6R` | Jupiter Price API |
+
 ---
 
-## 5. Trading on Solana Devnet
+## 6. CLI Demo Tool
+
+Bridle includes a terminal-based demo (`npm run demo`) that showcases the full agent lifecycle without a browser:
+
+```
+npm run demo
+```
+
+The demo:
+1. Initializes all services (wallet, AI, trading, policy)
+2. Creates an agent with its own Solana wallet
+3. Runs 3 decision cycles against live Jupiter market data
+4. Displays colored BUY/SELL/HOLD decisions with confidence scores and reasoning
+5. Shows a summary and cleans up
+
+This is useful for judges who want to test from terminal, CI/CD pipelines, or quick validation.
+
+---
+
+## 7. Trading on Solana Devnet
 
 ### How Trades Are Executed
 
@@ -273,7 +323,7 @@ sequenceDiagram
 
 ---
 
-## 6. Scalability
+## 9. Scalability
 
 ### Multi-Agent Architecture
 
@@ -296,7 +346,7 @@ The `AgentManager` treats each agent as an independent unit:
 
 ---
 
-## 7. Devnet vs Mainnet
+## 10. Devnet vs Mainnet
 
 This prototype runs exclusively on Solana Devnet. Key differences for a production mainnet deployment:
 
@@ -312,7 +362,7 @@ This prototype runs exclusively on Solana Devnet. Key differences for a producti
 
 ---
 
-## 8. Technologies Used
+## 11. Technologies Used
 
 | Component | Technology | Why |
 |-----------|------------|-----|
@@ -320,24 +370,28 @@ This prototype runs exclusively on Solana Devnet. Key differences for a producti
 | Runtime | Node.js 20+ | Async I/O for concurrent agent loops |
 | Blockchain | @solana/web3.js | Direct Solana RPC interaction, transaction signing |
 | AI | Google Gemini 2.5-flash-lite | High free-tier limits (1000 req/day), fast inference |
+| Market Data | Jupiter Price API | Free real-time prices, no API key needed |
 | Encryption | Node.js crypto | AES-256-GCM with PBKDF2 — battle-tested, zero dependencies |
 | Server | Express + ws | Lightweight HTTP + WebSocket on same port |
 | Dashboard | Vanilla HTML/CSS/JS | Zero build step, zero dependencies, instant load |
+| CLI | ANSI terminal output | Zero-dependency colored demo for judges |
 | Icons | Bootstrap Icons | Clean, consistent iconography via CDN |
 | Fonts | Bricolage Grotesque + Outfit | Modern typography for professional UI |
 
 ---
 
-## 9. What Makes Bridle Different
+## 12. What Makes Bridle Different
 
 Most agentic wallet demos show a single agent executing a hardcoded task. Bridle goes further:
 
 1. **Multi-agent** — N agents running simultaneously, each with independent wallets and strategies
-2. **Real AI reasoning** — Not just keyword matching; Gemini analyzes market data holistically
-3. **Graceful degradation** — Automatic fallback from LLM to rule engine on rate limits
-4. **Security-first** — Encrypted key storage, policy guards, and audit trails are core features, not afterthoughts
-5. **Observable** — Real-time dashboard shows every decision, trade, and balance change as it happens
-6. **Extensible** — Adding new strategies, tokens, or risk profiles requires minimal code changes
+2. **Live market data** — Real Jupiter Price API feeds, not hardcoded or random numbers
+3. **Real AI reasoning** — Not just keyword matching; Gemini analyzes market data holistically
+4. **Graceful degradation** — Automatic fallback from LLM to rule engine, live data to simulation
+5. **Security-first** — Encrypted key storage, policy guards, and audit trails are core features, not afterthoughts
+6. **Observable** — Real-time dashboard shows every decision, trade, and balance change as it happens
+7. **CLI demo** — Judges can test instantly from terminal with `npm run demo`
+8. **Extensible** — Adding new strategies, tokens, or risk profiles requires minimal code changes
 
 ---
 

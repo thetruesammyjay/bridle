@@ -2,7 +2,7 @@
 
 ## What is Bridle?
 
-Bridle is a multi-agent autonomous wallet platform built on Solana. It enables AI agents to operate as independent economic actors — creating their own wallets, analyzing market conditions, making trading decisions, and executing on-chain transactions without any human intervention.
+Bridle is a multi-agent autonomous wallet platform built on Solana. It enables AI agents to operate as independent economic actors — creating their own wallets, analyzing **live market data** from Jupiter Price API, making trading decisions, and executing on-chain transactions without any human intervention.
 
 The platform is designed as a prototype for the [Superteam Nigeria DeFi Developer Challenge](https://superteam.fun/earn/listing/defi-developer-challenge-agentic-wallets-for-ai-agents), demonstrating how agentic wallets can safely participate in the Solana ecosystem.
 
@@ -32,6 +32,14 @@ npm run dev
 ```
 
 The server starts on port 3000 by default. Open http://localhost:3000 to access the dashboard.
+
+### CLI Demo (No Browser Needed)
+
+```bash
+npm run demo
+```
+
+This spawns an agent in your terminal, runs 3 AI decision cycles against **live Jupiter price data**, and displays colored output with market trends, decisions, and reasoning. No browser or server needed.
 
 ### Environment Variables
 

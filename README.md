@@ -14,7 +14,9 @@
 
 - **Secure Wallet Management** — AES-256-GCM encrypted key storage with PBKDF2 key derivation. Keys never exist in plaintext at rest.
 - **AI-Powered Decisions** — Google Gemini analyzes market data and makes autonomous BUY/SELL/HOLD decisions with configurable risk profiles.
+- **Live Market Data** — Real-time price feeds from Jupiter Price API (SOL, USDC, BONK, RAY) with automatic simulation fallback.
 - **Real-Time Dashboard** — Dark-theme UI with WebSocket-powered live updates, agent cards, and activity feed.
+- **CLI Demo** — Run `npm run demo` for an instant terminal demo — no browser needed.
 - **Policy Guards** — Per-agent spending limits, daily caps, token whitelists, and cooldown periods.
 - **Multi-Agent Support** — Spawn N independent agents, each with their own wallet, strategy, and risk profile.
 - **Full Audit Trail** — Append-only JSONL logs for every wallet creation, decision, trade, and error.
@@ -97,6 +99,14 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
+### Quick Demo (No Browser Needed)
+
+```bash
+npm run demo
+```
+
+This spawns an agent in your terminal, runs 3 AI decision cycles against live market data, and shows the results with colored output.
+
 ### Usage
 
 1. **Spawn an Agent** — Enter a name, select a risk profile, click "Spawn Agent"
@@ -150,9 +160,10 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 bridle/
 ├── src/
 │   ├── index.ts          # Entry point
+│   ├── cli.ts            # CLI demo tool
 │   ├── config.ts         # Configuration
 │   ├── wallet/           # Encrypted key management
-│   ├── ai/               # AI decision engine (Gemini + fallback)
+│   ├── ai/               # AI engine + live market data (Jupiter API)
 │   ├── trading/          # Jupiter swap integration
 │   ├── policy/           # Policy guards & audit logging
 │   ├── agent/            # Agent lifecycle management

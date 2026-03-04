@@ -159,8 +159,8 @@ export class Agent {
                 cycle: this.cycleCount,
             });
 
-            // 2. Get market data
-            const marketData = this.marketDataService.getMarketSnapshot();
+            // 2. Get market data (live Jupiter prices with simulation fallback)
+            const marketData = await this.marketDataService.getMarketSnapshotAsync();
             this.lastMarketSnapshot = marketData;
 
             // 3. Build portfolio state

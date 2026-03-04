@@ -1,40 +1,41 @@
 {
-  "name": "bridle",
-  "version": "1.0.0",
-  "description": "Multi-Agent DeFi Autonomous Wallet Platform on Solana",
-  "main": "dist/index.js",
-  "type": "module",
-  "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "build": "tsc",
-    "start": "node dist/index.js",
-    "typecheck": "tsc --noEmit"
-  },
-  "keywords": [
-    "solana",
-    "agentic-wallet",
-    "ai-agent",
-    "defi",
-    "autonomous",
-    "trading"
-  ],
-  "author": "",
-  "license": "MIT",
-  "dependencies": {
-    "@google/generative-ai": "^0.21.0",
-    "@solana/spl-token": "^0.4.9",
-    "@solana/web3.js": "^1.98.0",
-    "dotenv": "^16.4.7",
-    "express": "^4.21.2",
-    "uuid": "^11.1.0",
-    "ws": "^8.18.0"
-  },
-  "devDependencies": {
-    "@types/express": "^5.0.0",
-    "@types/node": "^22.13.5",
-    "@types/uuid": "^10.0.0",
-    "@types/ws": "^8.5.14",
-    "tsx": "^4.19.3",
-    "typescript": "^5.7.3"
-  }
+    "name": "bridle",
+    "version": "1.0.0",
+    "description": "Multi-Agent DeFi Autonomous Wallet Platform on Solana",
+    "main": "dist/index.js",
+    "type": "module",
+    "scripts": {
+        "dev": "tsx watch src/index.ts",
+        "build": "tsc",
+        "start": "node dist/index.js",
+        "typecheck": "tsc --noEmit",
+        "demo": "tsx src/cli.ts demo"
+    },
+    "keywords": [
+        "solana",
+        "agentic-wallet",
+        "ai-agent",
+        "defi",
+        "autonomous",
+        "trading"
+    ],
+    "author": "",
+    "license": "MIT",
+    "dependencies": {
+        "@google/generative-ai": "^0.21.0",
+        "@solana/spl-token": "^0.4.9",
+        "@solana/web3.js": "^1.98.0",
+        "dotenv": "^16.4.7",
+        "express": "^4.21.2",
+        "uuid": "^11.1.0",
+        "ws": "^8.18.0"
+    },
+    "devDependencies": {
+        "@types/express": "^5.0.0",
+        "@types/node": "^22.13.5",
+        "@types/uuid": "^10.0.0",
+        "@types/ws": "^8.5.14",
+        "tsx": "^4.19.3",
+        "typescript": "^5.7.3"
+    }
 }
