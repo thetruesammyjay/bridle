@@ -1,3 +1,5 @@
+import { TradeAction } from '../ai/types.js';
+
 // ── Trading Types ──
 
 export interface SwapQuote {
@@ -11,6 +13,7 @@ export interface SwapQuote {
 
 export interface TradeResult {
     signature: string;
+    action: TradeAction;
     inputToken: string;
     outputToken: string;
     inputAmount: number;

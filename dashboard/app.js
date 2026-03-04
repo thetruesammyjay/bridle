@@ -244,6 +244,23 @@ function updateAgentCard(agent) {
     const tradesEl = card.querySelector('.trades-value');
     if (tradesEl) tradesEl.textContent = agent.totalTradesExecuted;
 
+    const winRateEl = card.querySelector('.winrate-value');
+    if (winRateEl) winRateEl.textContent = `${agent.winRate?.toFixed(1) || 0}%`;
+
+    const pnlEl = card.querySelector('.pnl-value');
+    if (pnlEl) {
+        const pnl = agent.realizedPnlSOL || 0;
+        pnlEl.textContent = `${pnl > 0 ? '+' : ''}${pnl.toFixed(4)} SOL`;
+        pnlEl.className = `card-stat-value pnl-value ${pnl >= 0 ? 'profit' : 'loss'}`;
+    }
+
+    // Update decision distribution chart text
+    const distEl = card.querySelector('.decision-dist');
+    if (distEl && agent.decisionDistribution) {
+        const { buy, sell, hold } = agent.decisionDistribution;
+        distEl.innerHTML = `<span class="BUY">${buy} B</span> / <span class="SELL">${sell} S</span> / <span class="HOLD">${hold} H</span>`;
+    }
+
     // Update decision box
     const decisionBox = card.querySelector('.card-decision');
     if (decisionBox && agent.lastDecision) {
@@ -302,6 +319,24 @@ function buildCardHTML(agent) {
         <div class="card-stat">
           <span class="card-stat-label">Trades</span>
           <span class="card-stat-value trades-value">${agent.totalTradesExecuted || 0}</span>
+        </div>
+        <div class="card-stat">
+          <span class="card-stat-label">Analytics</span>
+          <span class="card-stat-value decision-dist">
+            <span class="BUY">${agent.decisionDistribution?.buy || 0} B</span> / 
+            <span class="SELL">${agent.decisionDistribution?.sell || 0} S</span> / 
+            <span class="HOLD">${agent.decisionDistribution?.hold || 0} H</span>
+          </span>
+        </div>
+        <div class="card-stat">
+          <span class="card-stat-label">Win Rate</span>
+          <span class="card-stat-value winrate-value">${agent.winRate?.toFixed(1) || 0}%</span>
+        </div>
+        <div class="card-stat">
+          <span class="card-stat-label">Realized P&L</span>
+          <span class="card-stat-value pnl-value ${agent.realizedPnlSOL >= 0 ? 'profit' : 'loss'}">
+            ${agent.realizedPnlSOL > 0 ? '+' : ''}${(agent.realizedPnlSOL || 0).toFixed(4)} SOL
+          </span>
         </div>
       </div>
       <div class="card-decision">

@@ -55,6 +55,7 @@ export class TradingEngine {
 
             return {
                 signature: '',
+                action: decision.action,
                 inputToken: decision.inputToken,
                 outputToken: decision.outputToken,
                 inputAmount: decision.amountSOL,
@@ -100,6 +101,7 @@ export class TradingEngine {
 
             const result: TradeResult = {
                 signature,
+                action: decision.action,
                 inputToken: decision.inputToken,
                 outputToken: decision.outputToken,
                 inputAmount: decision.amountSOL,
@@ -130,6 +132,7 @@ export class TradingEngine {
         } catch (error) {
             const result: TradeResult = {
                 signature: '',
+                action: decision.action,
                 inputToken: decision.inputToken,
                 outputToken: decision.outputToken,
                 inputAmount: decision.amountSOL,

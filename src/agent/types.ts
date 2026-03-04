@@ -26,6 +26,14 @@ export interface AgentState {
     cycleCount: number;
     totalTradesExecuted: number;
     totalPnlSOL: number;
+    // Analytics
+    decisionDistribution: {
+        buy: number;
+        sell: number;
+        hold: number;
+    };
+    winRate: number;
+    realizedPnlSOL: number;
 }
 
 export interface AgentEvent {

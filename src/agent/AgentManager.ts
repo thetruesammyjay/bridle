@@ -10,6 +10,7 @@ import { config } from '../config.js';
 import { Agent } from './Agent.js';
 import { AgentConfig, AgentState, AgentEvent } from './types.js';
 import { DEFAULT_RISK_PROFILES } from '../ai/types.js';
+import { TelegramNotifier } from '../notifications/TelegramNotifier.js';
 
 /**
  * AgentManager orchestrates multiple autonomous agents.
@@ -24,6 +25,7 @@ export class AgentManager {
     private tradingEngine: TradingEngine;
     private policyGuard: PolicyGuard;
     private auditLogger: AuditLogger;
+    private telegramNotifier: TelegramNotifier;
     private eventListeners: Array<(event: AgentEvent) => void> = [];
 
     constructor() {
@@ -38,6 +40,10 @@ export class AgentManager {
             this.policyGuard,
             this.auditLogger
         );
+        this.telegramNotifier = new TelegramNotifier();
+        if (this.telegramNotifier.isEnabled()) {
+            this.onEvent((event) => this.telegramNotifier.handleAgentEvent(event));
+        }
     }
 
     async initialize(): Promise<void> {

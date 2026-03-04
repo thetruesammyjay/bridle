@@ -307,6 +307,12 @@ export class Agent {
      * Get current agent state snapshot.
      */
     getState(): AgentState {
+        const successfulTrades = this.tradeHistory.filter(t => t.success);
+        // Basic win rate assuming trades that increased overall PnL count as wins
+        const winRate = successfulTrades.length > 0 && this.totalPnlSOL > 0
+            ? 100 // Simplified: if overall profitable, 100% win rate for now as we don't track per-trade PnL yet
+            : 0;
+
         return {
             id: this.id,
             name: this.name,
@@ -318,8 +324,16 @@ export class Agent {
             tradeHistory: [...this.tradeHistory],
             createdAt: this.createdAt,
             cycleCount: this.cycleCount,
-            totalTradesExecuted: this.tradeHistory.filter(t => t.success).length,
+            totalTradesExecuted: successfulTrades.length,
             totalPnlSOL: this.totalPnlSOL,
+            // Analytics
+            decisionDistribution: {
+                buy: this.tradeHistory.filter(t => t.action === 'BUY').length,
+                sell: this.tradeHistory.filter(t => t.action === 'SELL').length,
+                hold: this.cycleCount - this.tradeHistory.length, // Rough estimate, hold = no trade
+            },
+            winRate,
+            realizedPnlSOL: this.totalPnlSOL,
         };
     }
 

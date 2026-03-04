@@ -39,6 +39,10 @@ export const config = {
         logs: path.resolve(__dirname, '..', 'data', 'logs'),
         dashboard: path.resolve(__dirname, '..', 'dashboard'),
     },
+    telegram: {
+        botToken: process.env.TELEGRAM_BOT_TOKEN || '',
+        chatId: process.env.TELEGRAM_CHAT_ID || '',
+    },
 } as const;
 
 export function isGeminiConfigured(): boolean {
