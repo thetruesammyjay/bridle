@@ -129,10 +129,6 @@ h6 {
   position: sticky;
   top: 0;
   z-index: 100;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-md) var(--space-xl);
   background: rgba(10, 15, 13, 0.88);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -140,9 +136,7 @@ h6 {
 }
 
 .header-left {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
+  /* Layout handled by Tailwind */
 }
 
 .logo {
@@ -237,14 +231,10 @@ h6 {
 #controls-bar {
   position: relative;
   z-index: 1;
-  padding: var(--space-lg) var(--space-xl);
 }
 
 .spawn-form {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-  max-width: 700px;
+  /* Layout handled by Tailwind */
 }
 
 .spawn-form input,
@@ -367,10 +357,7 @@ h6 {
 #agents-grid {
   position: relative;
   z-index: 1;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-  gap: var(--space-lg);
-  padding: 0 var(--space-xl) var(--space-xl);
+  /* Layout handled by Tailwind grid-cols */
 }
 
 /* Empty state */
@@ -635,7 +622,6 @@ h6 {
 #activity-section {
   position: relative;
   z-index: 1;
-  padding: 0 var(--space-xl) var(--space-2xl);
 }
 
 .section-header {

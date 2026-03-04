@@ -13,31 +13,69 @@
     href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#10B981',
+            accent: '#FCD34D',
+          },
+          animation: {
+            'float-slow': 'float 20s ease-in-out infinite',
+            'float-med': 'float 15s ease-in-out infinite',
+            'float-fast': 'float 10s ease-in-out infinite',
+          },
+          keyframes: {
+            float: {
+              '0%, 100%': { transform: 'translate(0, 0) rotate(0deg)' },
+              '25%': { transform: 'translate(20px, -20px) rotate(5deg)' },
+              '50%': { transform: 'translate(-10px, 15px) rotate(-5deg)' },
+              '75%': { transform: 'translate(-20px, -10px) rotate(2deg)' },
+            }
+          }
+        }
+      }
+    }
+  </script>
   <link rel="stylesheet" href="style.css">
 </head>
 
-<body>
+<body class="relative min-h-screen">
+  <!-- Floating Background Icons -->
+  <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none opacity-[0.04]">
+    <i class="bi bi-graph-up-arrow absolute top-10 left-10 text-[10rem] animate-float-slow text-primary"></i>
+    <i class="bi bi-robot absolute top-1/4 right-10 text-[12rem] animate-float-med text-accent"></i>
+    <i class="bi bi-currency-bitcoin absolute bottom-20 left-20 text-[14rem] animate-float-fast text-primary"></i>
+    <i class="bi bi-lightning-charge absolute bottom-1/4 right-1/4 text-[8rem] animate-float-slow text-accent"></i>
+    <i class="bi bi-wallet2 absolute top-1/2 left-1/3 text-[10rem] animate-float-med text-primary"></i>
+    <i class="bi bi-shield-check absolute top-10 right-1/3 text-[9rem] animate-float-fast text-primary"></i>
+  </div>
+
   <!-- Header -->
-  <header id="main-header">
-    <div class="header-left">
+  <header id="main-header"
+    class="flex flex-col md:flex-row items-center justify-between p-4 md:px-8 md:py-4 gap-4 w-full relative z-10">
+    <div class="header-left flex items-center justify-between w-full md:w-auto">
       <div class="logo">
         <i class="bi bi-wallet2 logo-icon"></i>
         <h1>Bridle</h1>
       </div>
-      <span class="badge">Devnet</span>
+      <span class="badge md:hidden">Devnet</span>
     </div>
-    <div class="header-right">
+    <div class="header-right flex items-center justify-between md:justify-end gap-4 md:gap-8 w-full md:w-auto">
+      <span class="badge hidden md:block mr-2">Devnet</span>
       <div class="status-indicator" id="connection-status">
         <span class="status-dot"></span>
-        <span class="status-text">Connecting...</span>
+        <span class="status-text text-sm">Connecting...</span>
       </div>
       <div class="header-stat" id="header-agent-count">
         <span class="stat-label">Agents</span>
-        <span class="stat-value">0</span>
+        <span class="stat-value text-xl md:text-2xl">0</span>
       </div>
       <div class="header-stat" id="header-total-trades">
         <span class="stat-label">Trades</span>
-        <span class="stat-value">0</span>
+        <span class="stat-value text-xl md:text-2xl">0</span>
       </div>
     </div>
   </header>
@@ -45,15 +83,16 @@
   <!-- Main Content -->
   <main>
     <!-- Controls Bar -->
-    <section id="controls-bar">
-      <div class="spawn-form">
-        <input type="text" id="agent-name" placeholder="Agent name (optional)" maxlength="20">
-        <select id="risk-profile">
+    <section id="controls-bar" class="px-4 md:px-8 py-4 md:py-6">
+      <div
+        class="spawn-form flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full max-w-2xl mx-auto md:mx-0">
+        <input type="text" id="agent-name" placeholder="Agent name (optional)" maxlength="20" class="w-full sm:flex-1">
+        <select id="risk-profile" class="w-full sm:w-auto">
           <option value="conservative"><i class="bi bi-shield-check"></i> Conservative</option>
           <option value="moderate" selected>Moderate</option>
           <option value="aggressive">Aggressive</option>
         </select>
-        <button id="spawn-btn" class="btn-primary">
+        <button id="spawn-btn" class="btn-primary w-full sm:w-auto justify-center">
           <i class="bi bi-plus-lg"></i>
           Spawn Agent
         </button>
@@ -61,22 +100,25 @@
     </section>
 
     <!-- Agent Cards Grid -->
-    <section id="agents-grid">
+    <section id="agents-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-4 md:px-8 pb-8">
       <div id="empty-state" class="empty-state">
-        <i class="bi bi-robot empty-icon"></i>
-        <h2>No Agents Running</h2>
-        <p>Spawn an agent to begin autonomous trading on Solana devnet</p>
+        <i class="bi bi-robot empty-icon text-5xl md:text-6xl"></i>
+        <h2 class="text-xl md:text-2xl mt-4">No Agents Running</h2>
+        <p class="text-sm md:text-base">Spawn an agent to begin autonomous trading on Solana devnet</p>
       </div>
     </section>
 
     <!-- Activity Feed -->
-    <section id="activity-section">
-      <div class="section-header">
-        <h2><i class="bi bi-activity"></i> Live Activity Feed</h2>
-        <button id="clear-feed-btn" class="btn-ghost">Clear</button>
+    <section id="activity-section" class="px-4 md:px-8 pb-12">
+      <div class="section-header flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-4">
+        <h2 class="text-lg md:text-xl font-semibold flex items-center gap-2"><i class="bi bi-activity text-primary"></i>
+          Live Activity Feed</h2>
+        <button id="clear-feed-btn" class="btn-ghost self-end sm:self-auto">Clear Feed</button>
       </div>
-      <div id="activity-feed">
-        <div class="feed-empty">Waiting for agent activity...</div>
+      <div id="activity-feed"
+        class="rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-card)] backdrop-blur-md max-h-[400px] overflow-y-auto">
+        <div class="feed-empty p-8 text-center text-sm md:text-base text-[var(--text-muted)]">Waiting for agent
+          activity...</div>
       </div>
     </section>
   </main>
