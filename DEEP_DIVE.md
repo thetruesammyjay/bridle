@@ -201,18 +201,14 @@ The Rule Engine uses:
 ## 4. Separation of Concerns
 
 ```mermaid
-block-beta
-    columns 1
-    block:P["Presentation: Dashboard (HTML/CSS/JS) + WebSocket"]
-    end
-    block:A["Application: Agent Manager + REST API + WS Handler"]
-    end
-    block:D["Domain Logic: Agent + AI Engine + Trading Engine"]
-    end
-    block:S["Security: KeyVault + PolicyGuard + AuditLogger"]
-    end
-    block:I["Infrastructure: WalletManager + JupiterClient + Solana RPC"]
-    end
+flowchart TD
+    P["Presentation — Dashboard + WebSocket"]
+    A["Application — Agent Manager + REST API + WS Handler"]
+    D["Domain Logic — Agent + AI Engine + Trading Engine"]
+    S["Security — KeyVault + PolicyGuard + AuditLogger"]
+    I["Infrastructure — WalletManager + JupiterClient + Solana RPC"]
+
+    P --> A --> D --> S --> I
 ```
 
 Each layer has a clear, single responsibility:
