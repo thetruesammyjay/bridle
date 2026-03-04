@@ -107,6 +107,33 @@ npm run demo
 
 This spawns an agent in your terminal, runs 3 AI decision cycles against live market data, and shows the results with colored output.
 
+**Example Output:**
+```text
+    ╔══════════════════════════════════════════╗
+    ║   🐴  BRIDLE — CLI Demo                  ║
+    ║   Autonomous Agent Trading on Solana     ║
+    ╚══════════════════════════════════════════╝
+
+  ✓  Wallet Manager initialized
+  ✓  AI Engine: Gemini (gemini-2.5-flash-lite)
+  ✓  RPC: https://api.devnet.solana.com
+
+  Cycle 1/3
+  · · · · · · · · · · · · · · · · · · · · · · · · ·
+  ▸  Market Trend: sideways (LIVE)
+  ▸  SOL: $152.25 (+1.50%)
+  ▸  Decision:  HOLD   Confidence: 70%
+  ▸  The market is trending sideways with mixed 24h changes. SOL has a slight positive change...
+
+  ...
+
+  Agent Summary
+  ├─ Name:         Demo-Agent
+  ├─ Public Key:   CMrgyMxDtZhzMtXoahSYdCRd5SiKs...
+  ├─ Balance:      2.0000 SOL
+  ├─ Cycles Run:   3
+```
+
 ### Usage
 
 1. **Spawn an Agent** — Enter a name, select a risk profile, click "Spawn Agent"
