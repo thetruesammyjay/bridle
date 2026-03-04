@@ -3,7 +3,12 @@
     "version": "1.0.0",
     "description": "Multi-Agent DeFi Autonomous Wallet Platform on Solana",
     "main": "dist/index.js",
+    "types": "dist/index.d.ts",
     "type": "module",
+    "exports": {
+        ".": "./dist/index.js",
+        "./sdk": "./dist/sdk/index.js"
+    },
     "scripts": {
         "dev": "tsx watch src/index.ts",
         "build": "tsc",

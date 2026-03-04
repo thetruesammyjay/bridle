@@ -32,6 +32,8 @@ export class Agent {
     private createdAt: string;
     private intervalMs: number;
     private loopTimer: ReturnType<typeof setTimeout> | null = null;
+    private consecutiveErrors: number = 0;
+    private readonly MAX_BACKOFF_MS = 300_000; // 5 minutes max
 
     private riskProfile: RiskProfile;
     private walletManager: WalletManager;
@@ -245,6 +247,7 @@ export class Agent {
                 });
             }
 
+            this.consecutiveErrors = 0; // Reset on success
             this.status = 'running';
 
             this.emitEvent('agent:cycle', {
@@ -254,32 +257,50 @@ export class Agent {
             });
 
         } catch (error) {
-            this.status = 'error';
-            console.error(`[Agent ${this.name}] Cycle error:`, error);
+            this.consecutiveErrors++;
+            console.error(`[Agent ${this.name}] Cycle error (attempt ${this.consecutiveErrors}):`, error);
 
+            this.status = 'error';
             await this.auditLogger.log({
                 timestamp: new Date().toISOString(),
                 agentId: this.id,
                 event: 'ERROR',
-                data: { error: String(error), cycle: this.cycleCount },
+                data: {
+                    error: String(error),
+                    cycle: this.cycleCount,
+                    consecutiveErrors: this.consecutiveErrors,
+                },
             });
 
             this.emitEvent('agent:error', {
                 error: String(error),
                 cycle: this.cycleCount,
+                consecutiveErrors: this.consecutiveErrors,
             });
 
-            // Recover to running after error
+            // Auto-recover to running state
             this.status = 'running';
         }
 
-        // Schedule next cycle
+        // Schedule next cycle (with backoff if errors)
         this.scheduleNextCycle();
     }
 
     private scheduleNextCycle(): void {
         if (this.status === 'stopped') return;
-        this.loopTimer = setTimeout(() => this.executeCycle(), this.intervalMs);
+
+        let delay = this.intervalMs;
+
+        // Exponential backoff on consecutive errors
+        if (this.consecutiveErrors > 0) {
+            delay = Math.min(
+                this.intervalMs * Math.pow(2, this.consecutiveErrors),
+                this.MAX_BACKOFF_MS
+            );
+            console.log(`[Agent ${this.id}] Backing off: next cycle in ${(delay / 1000).toFixed(0)}s (${this.consecutiveErrors} consecutive errors)`);
+        }
+
+        this.loopTimer = setTimeout(() => this.executeCycle(), delay);
     }
 
     /**
