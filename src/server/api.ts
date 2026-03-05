@@ -100,5 +100,97 @@ export function createApiRouter(agentManager: AgentManager): Router {
         });
     });
 
+    // ─── WalletConnect Routes ───
+
+    const wcService = agentManager.getWalletConnectService();
+
+    // POST /api/wc/connect — Connect a dApp to an agent's wallet
+    router.post('/wc/connect', (req: Request, res: Response) => {
+        try {
+            const { agentId, dappName, dappUrl } = req.body || {};
+            if (!agentId || !dappName) {
+                res.status(400).json({ success: false, error: 'agentId and dappName are required' });
+                return;
+            }
+            const session = wcService.connectDApp(agentId, dappName, dappUrl || '');
+            if (!session) {
+                res.status(404).json({ success: false, error: 'Agent wallet not found' });
+                return;
+            }
+            res.status(201).json({ success: true, session });
+        } catch (error) {
+            res.status(500).json({ success: false, error: String(error) });
+        }
+    });
+
+    // DELETE /api/wc/sessions/:id — Disconnect a dApp session
+    router.delete('/wc/sessions/:id', (req: Request, res: Response) => {
+        try {
+            const disconnected = wcService.disconnectSession(req.params.id as string);
+            if (!disconnected) {
+                res.status(404).json({ success: false, error: 'Session not found' });
+                return;
+            }
+            res.json({ success: true, message: 'Session disconnected' });
+        } catch (error) {
+            res.status(500).json({ success: false, error: String(error) });
+        }
+    });
+
+    // GET /api/wc/sessions — List all active dApp sessions
+    router.get('/wc/sessions', (_req: Request, res: Response) => {
+        try {
+            const sessions = wcService.getSessions();
+            res.json({ success: true, sessions });
+        } catch (error) {
+            res.status(500).json({ success: false, error: String(error) });
+        }
+    });
+
+    // POST /api/wc/sign — Submit a sign request (from a connected dApp)
+    router.post('/wc/sign', async (req: Request, res: Response) => {
+        try {
+            const { sessionId, type, payload, description } = req.body || {};
+            if (!sessionId || !payload) {
+                res.status(400).json({ success: false, error: 'sessionId and payload are required' });
+                return;
+            }
+            const result = await wcService.requestSignature(
+                sessionId,
+                type || 'sign_transaction',
+                payload,
+                description || 'Transaction signing request'
+            );
+            res.json({ success: true, ...result });
+        } catch (error) {
+            res.status(500).json({ success: false, error: String(error) });
+        }
+    });
+
+    // POST /api/wc/requests/:id/resolve — Approve or reject a pending sign request
+    router.post('/wc/requests/:id/resolve', async (req: Request, res: Response) => {
+        try {
+            const { approved } = req.body || {};
+            if (typeof approved !== 'boolean') {
+                res.status(400).json({ success: false, error: 'approved (boolean) is required' });
+                return;
+            }
+            const result = await wcService.resolveRequest(req.params.id as string, approved);
+            res.json(result);
+        } catch (error) {
+            res.status(500).json({ success: false, error: String(error) });
+        }
+    });
+
+    // GET /api/wc/requests — List pending sign requests
+    router.get('/wc/requests', (_req: Request, res: Response) => {
+        try {
+            const requests = wcService.getPendingRequests();
+            res.json({ success: true, requests });
+        } catch (error) {
+            res.status(500).json({ success: false, error: String(error) });
+        }
+    });
+
     return router;
 }

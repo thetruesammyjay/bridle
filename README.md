@@ -22,6 +22,7 @@
 - **Multi-Agent Support** — Spawn N independent agents, each with their own wallet, strategy, and risk profile.
 - **Full Audit Trail** — Append-only JSONL logs for every wallet creation, decision, trade, and error.
 - **REST API** — Full API for programmatic agent management.
+- **dApp Connector** — Connect external Solana dApps to agent wallets. All external transactions require explicit dashboard approval.
 
 ---
 
@@ -184,6 +185,12 @@ This spawns an agent in your terminal, runs 3 AI decision cycles against live ma
 | `POST` | `/api/agents/:id/airdrop` | Request devnet airdrop |
 | `GET` | `/api/agents/:id/history` | Get audit log |
 | `GET` | `/api/status` | System status |
+| `POST` | `/api/wc/connect` | Connect a dApp to an agent wallet |
+| `GET` | `/api/wc/sessions` | List active dApp sessions |
+| `DELETE` | `/api/wc/sessions/:id` | Disconnect a dApp session |
+| `POST` | `/api/wc/sign` | Submit a sign request |
+| `POST` | `/api/wc/requests/:id/resolve` | Approve/reject sign request |
+| `GET` | `/api/wc/requests` | List pending sign requests |
 
 ### Spawn Agent Request Body
 

@@ -101,6 +101,20 @@ function handleWSMessage(msg) {
         case 'agent:cycle':
             handleAgentCycle(agentId, data);
             break;
+        case 'wc:session_created':
+            addFeedItem('system', `<i class="bi bi-plug text-primary"></i> <strong>dApp</strong> "${data.dappName}" connected to agent wallet`);
+            showToast(`dApp "${data.dappName}" connected!`, 'success');
+            break;
+        case 'wc:session_disconnected':
+            addFeedItem('system', `<i class="bi bi-plug text-red-400"></i> dApp session disconnected`);
+            break;
+        case 'wc:sign_request':
+            showSignRequestModal(data);
+            break;
+        case 'wc:sign_resolved':
+            addFeedItem(data.status === 'approved' ? 'trade' : 'error',
+                `<i class="bi bi-${data.status === 'approved' ? 'check-circle-fill text-green-400' : 'x-circle-fill text-red-400'}"></i> Sign request ${data.status}${data.signature ? ' — signed' : ''}`);
+            break;
     }
 
     updateHeaderStats();
@@ -345,6 +359,7 @@ function buildCardHTML(agent) {
     </div>
     <div class="card-footer">
       <button class="btn-ghost btn-sm btn-success airdrop-btn"><i class="bi bi-coin"></i> Airdrop</button>
+      <button class="btn-ghost btn-sm connect-dapp-btn" style="color:var(--color-hold);border-color:var(--color-hold)"><i class="bi bi-plug"></i> Connect dApp</button>
       <button class="btn-ghost btn-sm btn-danger stop-btn"><i class="bi bi-stop-circle"></i> Stop</button>
     </div>
   `;
@@ -366,6 +381,11 @@ function bindCardActions(agentId, card) {
 
     if (airdropBtn) {
         airdropBtn.addEventListener('click', () => requestAirdrop(agentId));
+    }
+
+    const connectDappBtn = card.querySelector('.connect-dapp-btn');
+    if (connectDappBtn) {
+        connectDappBtn.addEventListener('click', () => openWCModal(agentId));
     }
 
     if (stopBtn) {
@@ -530,3 +550,183 @@ $agentName.addEventListener('keypress', (e) => {
 
 // ─── Initialize ───
 connectWebSocket();
+
+// ─── WalletConnect Modal Functions ───
+
+function openWCModal(agentId) {
+    document.getElementById('wc-agent-id').value = agentId;
+    document.getElementById('wc-dapp-name').value = '';
+    document.getElementById('wc-dapp-url').value = '';
+    const modal = document.getElementById('wc-modal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+
+    // Load existing sessions for this agent
+    loadAgentSessions(agentId);
+}
+
+function closeWCModal() {
+    const modal = document.getElementById('wc-modal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+
+async function loadAgentSessions(agentId) {
+    try {
+        const res = await fetch('/api/wc/sessions');
+        const data = await res.json();
+        if (!data.success) return;
+
+        const agentSessions = data.sessions.filter(s => s.agentId === agentId);
+        const container = document.getElementById('wc-active-sessions');
+        const list = document.getElementById('wc-session-list');
+
+        if (agentSessions.length > 0) {
+            container.classList.remove('hidden');
+            list.innerHTML = agentSessions.map(s => `
+                <div class="flex items-center justify-between bg-[var(--bg-surface)] rounded-lg px-3 py-2">
+                    <div>
+                        <div class="text-sm font-medium text-white">${escapeHtml(s.dappName)}</div>
+                        <div class="text-xs text-[var(--text-muted)]">${s.dappUrl || 'No URL'}</div>
+                    </div>
+                    <button onclick="disconnectSession('${s.id}')" class="text-xs text-red-400 hover:text-red-300"><i class="bi bi-x-lg"></i></button>
+                </div>
+            `).join('');
+        } else {
+            container.classList.add('hidden');
+        }
+    } catch (e) {
+        console.error('Failed to load sessions:', e);
+    }
+}
+
+async function submitWCConnection() {
+    const agentId = document.getElementById('wc-agent-id').value;
+    const dappName = document.getElementById('wc-dapp-name').value.trim();
+    const dappUrl = document.getElementById('wc-dapp-url').value.trim();
+
+    if (!dappName) {
+        showToast('Please enter a dApp name', 'error');
+        return;
+    }
+
+    try {
+        const res = await fetch('/api/wc/connect', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ agentId, dappName, dappUrl }),
+        });
+
+        const data = await res.json();
+        if (data.success) {
+            showToast(`Connected to "${dappName}"! Session: ${data.session.id.substring(0, 8)}...`, 'success');
+            loadAgentSessions(agentId);
+            document.getElementById('wc-dapp-name').value = '';
+            document.getElementById('wc-dapp-url').value = '';
+        } else {
+            showToast(`Connection failed: ${data.error}`, 'error');
+        }
+    } catch (error) {
+        showToast(`Error: ${error.message}`, 'error');
+    }
+}
+
+async function disconnectSession(sessionId) {
+    try {
+        const res = await fetch(`/api/wc/sessions/${sessionId}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+            showToast('Session disconnected', 'info');
+            const agentId = document.getElementById('wc-agent-id').value;
+            if (agentId) loadAgentSessions(agentId);
+        }
+    } catch (error) {
+        showToast(`Error: ${error.message}`, 'error');
+    }
+}
+
+// ─── Sign Request Modal ───
+
+let signRequestTimer = null;
+
+function showSignRequestModal(request) {
+    document.getElementById('wc-request-id').value = request.id;
+    document.getElementById('wc-sign-dapp').textContent = request.dappName;
+    document.getElementById('wc-sign-desc').textContent = request.description;
+    document.getElementById('wc-sign-type').textContent = request.type;
+
+    const modal = document.getElementById('wc-sign-modal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+
+    // Start countdown timer (2 minutes)
+    let remaining = 120;
+    const timerEl = document.getElementById('wc-sign-timer');
+    clearInterval(signRequestTimer);
+    signRequestTimer = setInterval(() => {
+        remaining--;
+        const mins = Math.floor(remaining / 60);
+        const secs = remaining % 60;
+        timerEl.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+        if (remaining <= 0) {
+            clearInterval(signRequestTimer);
+            closeSignModal();
+            showToast('Sign request expired', 'error');
+        }
+    }, 1000);
+
+    showToast('⚡ dApp requesting transaction signature!', 'info');
+}
+
+function closeSignModal() {
+    const modal = document.getElementById('wc-sign-modal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    clearInterval(signRequestTimer);
+}
+
+async function approveSignRequest() {
+    const requestId = document.getElementById('wc-request-id').value;
+    closeSignModal();
+
+    try {
+        const res = await fetch(`/api/wc/requests/${requestId}/resolve`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ approved: true }),
+        });
+        const data = await res.json();
+        if (data.success) {
+            showToast('Transaction approved and signed!', 'success');
+        } else {
+            showToast(`Signing failed: ${data.error}`, 'error');
+        }
+    } catch (error) {
+        showToast(`Error: ${error.message}`, 'error');
+    }
+}
+
+async function rejectSignRequest() {
+    const requestId = document.getElementById('wc-request-id').value;
+    closeSignModal();
+
+    try {
+        await fetch(`/api/wc/requests/${requestId}/resolve`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ approved: false }),
+        });
+        showToast('Transaction rejected', 'info');
+    } catch (error) {
+        showToast(`Error: ${error.message}`, 'error');
+    }
+}
+
+// Make WC functions global for inline onclick
+window.closeWCModal = closeWCModal;
+window.submitWCConnection = submitWCConnection;
+window.disconnectSession = disconnectSession;
+window.approveSignRequest = approveSignRequest;
+window.rejectSignRequest = rejectSignRequest;
+window.showSignRequestModal = showSignRequestModal;
+window.closeSignModal = closeSignModal;

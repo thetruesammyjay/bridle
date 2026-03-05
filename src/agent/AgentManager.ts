@@ -11,6 +11,7 @@ import { Agent } from './Agent.js';
 import { AgentConfig, AgentState, AgentEvent } from './types.js';
 import { DEFAULT_RISK_PROFILES } from '../ai/types.js';
 import { TelegramNotifier } from '../notifications/TelegramNotifier.js';
+import { WalletConnectService } from '../walletconnect/WalletConnectService.js';
 
 /**
  * AgentManager orchestrates multiple autonomous agents.
@@ -26,6 +27,7 @@ export class AgentManager {
     private policyGuard: PolicyGuard;
     private auditLogger: AuditLogger;
     private telegramNotifier: TelegramNotifier;
+    private wcService: WalletConnectService;
     private eventListeners: Array<(event: AgentEvent) => void> = [];
 
     constructor() {
@@ -41,6 +43,18 @@ export class AgentManager {
             this.auditLogger
         );
         this.telegramNotifier = new TelegramNotifier();
+        this.wcService = new WalletConnectService(this.walletManager);
+
+        // Forward WalletConnect events through the main event bus
+        this.wcService.onEvent((wcEvent) => {
+            this.broadcastEvent({
+                type: wcEvent.type as AgentEvent['type'],
+                agentId: (wcEvent.data as any).agentId || '',
+                data: wcEvent.data as Record<string, unknown>,
+                timestamp: new Date().toISOString(),
+            });
+        });
+
         if (this.telegramNotifier.isEnabled()) {
             this.onEvent((event) => this.telegramNotifier.handleAgentEvent(event));
         }
@@ -159,5 +173,12 @@ export class AgentManager {
     async shutdown(): Promise<void> {
         const stopPromises = Array.from(this.agents.keys()).map(id => this.stopAgent(id));
         await Promise.allSettled(stopPromises);
+    }
+
+    /**
+     * Get the WalletConnect service (used by API routes).
+     */
+    getWalletConnectService(): WalletConnectService {
+        return this.wcService;
     }
 }

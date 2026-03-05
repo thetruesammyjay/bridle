@@ -37,7 +37,8 @@ export interface AgentState {
 }
 
 export interface AgentEvent {
-    type: 'agent:spawned' | 'agent:decision' | 'agent:trade' | 'agent:balance' | 'agent:stopped' | 'agent:error' | 'agent:cycle';
+    type: 'agent:spawned' | 'agent:decision' | 'agent:trade' | 'agent:balance' | 'agent:stopped' | 'agent:error' | 'agent:cycle'
+    | 'wc:session_created' | 'wc:session_disconnected' | 'wc:sign_request' | 'wc:sign_resolved';
     agentId: string;
     data: Record<string, unknown>;
     timestamp: string;
