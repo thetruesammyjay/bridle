@@ -8,25 +8,7 @@ This document covers the design decisions, security architecture, AI integration
 
 ---
 
-## 🏆 Hackathon Requirements & Judging Criteria
 
-Bridle was engineered to explicitly fulfill and exceed the Superteam Nigeria "Agentic Wallets for AI Agents" technical expectations:
-
-### Core Requirements
-- **Create a wallet programmatically:** Agents autonomously generate encrypted Ed25519 keypairs upon initialization (`WalletManager.ts`).
-- **Autonomous Transactions:** Uses encrypted keys held in memory to sign on-chain transactions without any human intervention (`TradingEngine.ts`).
-- **Devnet SPL/SOL Holdings:** Agents request airdrops and maintain live balances of SOL and SPL tokens.
-- **dApp Interaction:** Integrates live Jupiter Price API feeds to quote and simulate Jupiter-style swaps.
-- **dApp Connector:** External Solana dApps can connect to agent wallets via the dashboard; all external signing requires explicit human approval with a 2-minute timeout (`WalletConnectService.ts`).
-- **Deep Dive (Written):** This document details the AES-256-GCM encryption, the strict separation of AI logic from private keys, and the systemic security model.
-
-### Technical Expectations & Judging
-- **Security & Key Management:** Bank-grade AES-256-GCM + PBKDF2 encryption. Keys never touch the disk in plaintext.
-- **Simulation/Decision-making:** Gemini parses live market data feeds to provide reasoned BUY/SELL/HOLD JSON outputs, supported by an automatic `RuleEngine` fallback for API degradation.
-- **Separation of Responsibilities:** Clean boundary between the `AIEngine` (generates decisions), `PolicyGuard` (enforces daily limits), and `WalletManager` (signs transactions). The AI never touches the private key.
-- **Scalability:** The `AgentManager` proves scalability by orchestrating varying numbers of concurrent agents with isolated wallets, balances, and AI decision loops.
-
----
 
 ## 1. Wallet Design
 

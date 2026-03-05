@@ -6,14 +6,6 @@ Bridle is a multi-agent autonomous wallet platform built on Solana. It enables A
 
 The platform is designed as a prototype for the [Superteam Nigeria DeFi Developer Challenge](https://superteam.fun/earn/listing/defi-developer-challenge-agentic-wallets-for-ai-agents), demonstrating how agentic wallets can safely participate in the Solana ecosystem.
 
-### 🏆 Hackathon Requirements Fulfillment
-
-Bridle was purpose-built to **exceed** the Superteam Nigeria bounty requirements:
-- **Programmatic Wallets:** Agents generate and encrypt their own Ed25519 keypairs upon spawning (`WalletManager.ts`).
-- **Autonomous Transactions:** Agents sign on-chain transactions without human input (`TradingEngine.ts`).
-- **Test dApp Interaction:** Integrates live Jupiter Price API feeds to construct and simulate Jupiter-style swaps on Devnet.
-- **dApp Connector:** External Solana dApps can connect to agent wallets via the dashboard; all external signing requires human approval (`WalletConnectService.ts`).
-- **Multiple Agents:** The `AgentManager` orchestrates multiple simultaneous agents, each operating independently with isolated balances and AI decision loops.
 
 ### Core Capabilities
 
