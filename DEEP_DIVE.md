@@ -17,6 +17,7 @@ Bridle was engineered to explicitly fulfill and exceed the Superteam Nigeria "Ag
 - **Autonomous Transactions:** Uses encrypted keys held in memory to sign on-chain transactions without any human intervention (`TradingEngine.ts`).
 - **Devnet SPL/SOL Holdings:** Agents request airdrops and maintain live balances of SOL and SPL tokens.
 - **dApp Interaction:** Integrates live Jupiter Price API feeds to quote and simulate Jupiter-style swaps.
+- **dApp Connector:** External Solana dApps can connect to agent wallets via the dashboard; all external signing requires explicit human approval with a 2-minute timeout (`WalletConnectService.ts`).
 - **Deep Dive (Written):** This document details the AES-256-GCM encryption, the strict separation of AI logic from private keys, and the systemic security model.
 
 ### Technical Expectations & Judging
@@ -147,9 +148,14 @@ flowchart LR
     WM -->|"Decrypts Key"| KV["KeyVault"]
     KV -->|"Keypair"| WM
     WM -->|"Signed TX"| SOL["Solana RPC"]
+
+    DAPP["External dApp"] -->|"Sign Request"| WCS["WalletConnectService"]
+    WCS -->|"Approval Prompt"| DASH["Dashboard UI"]
+    DASH -->|"User Approves"| WCS
+    WCS -->|"Signs via"| WM
 ```
 
-The AI engine never sees the secret key. It produces a `TradeDecision` (action, amount, tokens, reasoning), which flows through policy validation before the trading engine requests a signature from the wallet manager. This is analogous to a trader telling a custodian what to do — the trader never handles the vault keys.
+The AI engine never sees the secret key. It produces a `TradeDecision` (action, amount, tokens, reasoning), which flows through policy validation before the trading engine requests a signature from the wallet manager. External dApps follow a separate path through the `WalletConnectService`, which routes signing requests to the dashboard for explicit human approval before using the same `WalletManager` to sign. This is analogous to a trader telling a custodian what to do — the trader never handles the vault keys, and outside parties need explicit permission.
 
 ### Decision Engine Architecture
 
@@ -222,9 +228,9 @@ The Rule Engine uses:
 ```mermaid
 flowchart TD
     O["Outputs — Web Dashboard, CLI, Telegram, SDK"]
-    A["Application — Agent Manager + REST API + WS Handler"]
+    A["Application — Agent Manager + REST API + WS Handler + dApp Connector"]
     D["Domain Logic — Agent + AI Engine + Trading + Analytics"]
-    S["Security & Recovery — KeyVault + PolicyGuard + AuditLogger + Backoff"]
+    S["Security and Recovery — KeyVault + PolicyGuard + AuditLogger + Backoff"]
     I["Infrastructure — WalletManager + JupiterClient + Solana RPC"]
 
     O --> A --> D --> S --> I
@@ -235,7 +241,7 @@ Each layer has a clear, single responsibility:
 | Layer | Module | Responsibility |
 |-------|--------|---------------|
 | **Outputs** | Dashboard, Telegram, CLI | Display real-time agent activity and push alerts |
-| **Application** | AgentManager, API, WSHandler | Orchestrate agent lifecycle and external communication |
+| **Application** | AgentManager, API, WSHandler, WalletConnectService | Orchestrate agent lifecycle, external dApp connections, and communication |
 | **Domain** | Agent, AIEngine, TradingEngine, Analytics | Business logic: decisions, execution, and P&L tracking |
 | **Security** | KeyVault, PolicyGuard, AuditLogger | Encryption, validation, compliance, and error recovery |
 | **Infrastructure** | WalletManager, JupiterClient | Blockchain interaction and swap routing |
@@ -244,7 +250,66 @@ This separation ensures that:
 - The AI module knows nothing about encryption or transaction signing
 - The wallet module knows nothing about trading strategy
 - The policy module can be independently audited
+- External dApp connectors route through a separate approval path, isolated from the AI decision loop
 - Each module can be tested, replaced, or upgraded independently
+
+---
+
+## 4. dApp Connector Architecture
+
+Bridle extends the agent wallet concept beyond autonomous trading. The **WalletConnectService** allows external Solana dApps (like Jupiter, Raydium, or any Solana protocol) to connect to an agent's wallet and request transaction signatures — all subject to explicit human approval through the dashboard.
+
+### Why This Matters
+
+Traditional agentic wallets are "islands" — they can only interact with protocols their internal trading engine is coded for. Bridle's dApp Connector breaks this limitation: once an external dApp connects to an agent's wallet, the agent's address can participate in **any** Solana protocol — swaps, lending, staking, NFTs — without modifying the core codebase.
+
+### Connection and Signing Flow
+
+```mermaid
+sequenceDiagram
+    participant User as Dashboard User
+    participant UI as Bridle Dashboard
+    participant API as Bridle REST API
+    participant WCS as WalletConnectService
+    participant WM as WalletManager
+    participant KV as KeyVault
+    participant dApp as External dApp
+
+    Note over User, dApp: 1. Session Establishment
+    User->>UI: Click "Connect dApp" on Agent card
+    UI->>API: POST /api/wc/connect (agentId, dappName)
+    API->>WCS: connectDApp(agentId, dappName)
+    WCS-->>API: DAppSession (id, publicKey)
+    API-->>UI: Session created
+    UI-->>User: Show session + agent public key
+    User->>dApp: Use agent public key in dApp
+
+    Note over User, dApp: 2. External Transaction Signing
+    dApp->>API: POST /api/wc/sign (sessionId, payload)
+    API->>WCS: requestSignature(sessionId, payload)
+    WCS->>UI: WebSocket: wc:sign_request
+    UI->>User: Show approval modal with 2:00 timer
+    User->>UI: Click "Approve"
+    UI->>API: POST /api/wc/requests/:id/resolve (approved: true)
+    API->>WCS: resolveRequest(id, true)
+    WCS->>WM: getAgentKeypair(agentId)
+    WM->>KV: retrieveKey(agentId)
+    KV-->>WM: decrypted secretKey
+    WM-->>WCS: Keypair
+    WCS->>WCS: Sign transaction
+    WCS-->>API: Signed TX (base64)
+    API-->>dApp: { approved: true, signature: "..." }
+```
+
+### Security Model for dApp Connections
+
+| Concern | Mitigation |
+|---------|------------|
+| Unauthorized access | Sessions are tied 1-to-1 with specific agents; isolated from other agents |
+| Blind signing | All sign requests are forwarded to the dashboard with full context; human must approve |
+| Stale requests | Sign requests auto-expire after 2 minutes if not acted upon |
+| Key exposure | Keys are never sent to the dApp; signing happens server-side in the KeyVault |
+| Session hijacking | Sessions are UUID-based and managed server-side; disconnection invalidates immediately |
 
 ## 5. Live Market Data
 
@@ -392,7 +457,8 @@ This prototype runs exclusively on Solana Devnet. Key differences for a producti
 | Market Data | Jupiter Price API | Free real-time prices, no API key needed |
 | Encryption | Node.js crypto | AES-256-GCM with PBKDF2 — battle-tested, zero dependencies |
 | Server | Express + ws | Lightweight HTTP + WebSocket on same port |
-| Dashboard | Vanilla HTML/CSS/JS | Zero build step, zero dependencies, instant load |
+| Dashboard | Vanilla HTML/CSS/JS + Tailwind CSS | Zero build step, zero-dependency base, instant load, Tailwind for responsive design |
+| dApp Connector | WalletConnectService (custom) | Lightweight session management for external dApp signing without heavy SDK dependencies |
 | CLI | ANSI terminal output | Zero-dependency colored demo for judges |
 | Icons | Bootstrap Icons | Clean, consistent iconography via CDN |
 | Fonts | Bricolage Grotesque + Outfit | Modern typography for professional UI |
@@ -411,6 +477,7 @@ Most agentic wallet demos show a single agent executing a hardcoded task. Bridle
 6. **Observable** — Real-time dashboard shows every decision, trade, and balance change as it happens
 7. **CLI demo** — Judges can test instantly from terminal with `npm run demo`
 8. **Extensible** — Adding new strategies, tokens, or risk profiles requires minimal code changes
+9. **dApp Connector** — External Solana dApps can connect to agent wallets for signing, with explicit human-in-the-loop approval via the dashboard
 
 ---
 

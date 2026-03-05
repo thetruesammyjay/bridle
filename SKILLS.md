@@ -12,6 +12,7 @@ Bridle was purpose-built to **exceed** the Superteam Nigeria bounty requirements
 - **Programmatic Wallets:** Agents generate and encrypt their own Ed25519 keypairs upon spawning (`WalletManager.ts`).
 - **Autonomous Transactions:** Agents sign on-chain transactions without human input (`TradingEngine.ts`).
 - **Test dApp Interaction:** Integrates live Jupiter Price API feeds to construct and simulate Jupiter-style swaps on Devnet.
+- **dApp Connector:** External Solana dApps can connect to agent wallets via the dashboard; all external signing requires human approval (`WalletConnectService.ts`).
 - **Multiple Agents:** The `AgentManager` orchestrates multiple simultaneous agents, each operating independently with isolated balances and AI decision loops.
 
 ### Core Capabilities
@@ -25,6 +26,7 @@ Bridle was purpose-built to **exceed** the Superteam Nigeria bounty requirements
 7. **Performance Analytics** — Live tracking of agent Win Rate, Realized P&L, and decision distributions
 8. **Real-time Notifications** — Pushes live trade alerts, errors, and balance updates directly to a configured Telegram Bot
 9. **Full Audit Trail** — Every action is logged to append-only JSONL files for accountability
+10. **dApp Connector** — Connect external Solana dApps to agent wallets. External transactions require explicit dashboard approval with a 2-minute timeout
 
 ---
 
@@ -119,6 +121,44 @@ GET /api/status
 Response: { "success": true, "status": "operational", "agentCount": 2, "uptime": 3600 }
 ```
 
+#### Connect a dApp to an Agent Wallet
+```
+POST /api/wc/connect
+Body: { "agentId": "<uuid>", "dappName": "Jupiter", "dappUrl": "https://jup.ag" }
+Response: { "success": true, "session": { "id": "...", "publicKey": "...", ... } }
+```
+
+#### List Active dApp Sessions
+```
+GET /api/wc/sessions
+Response: { "success": true, "sessions": [...] }
+```
+
+#### Disconnect a dApp Session
+```
+DELETE /api/wc/sessions/:id
+Response: { "success": true, "message": "Session disconnected" }
+```
+
+#### Submit a Sign Request (from dApp)
+```
+POST /api/wc/sign
+Body: { "sessionId": "...", "payload": "<base64 tx>", "description": "Swap 1 SOL for USDC" }
+Response: { "success": true, "approved": true, "signature": "<base64 signed tx>" }
+```
+
+#### Approve/Reject a Sign Request
+```
+POST /api/wc/requests/:id/resolve
+Body: { "approved": true }
+```
+
+#### List Pending Sign Requests
+```
+GET /api/wc/requests
+Response: { "success": true, "requests": [...] }
+```
+
 ### WebSocket Events
 
 Connect to `ws://localhost:3000` to receive real-time events:
@@ -133,6 +173,10 @@ Connect to `ws://localhost:3000` to receive real-time events:
 | `agent:stopped` | Agent shut down | Agent name |
 | `agent:error` | Error occurred | Error message |
 | `agent:cycle` | Cycle completed | Cycle count, status |
+| `wc:session_created` | dApp connected to agent wallet | Session ID, dApp name, public key |
+| `wc:session_disconnected` | dApp session disconnected | Session ID, agent ID |
+| `wc:sign_request` | dApp requested transaction signing | Request ID, dApp name, type, payload |
+| `wc:sign_resolved` | Sign request approved or rejected | Request ID, status, signature |
 
 ### Agent Decision Cycle
 
@@ -196,3 +240,10 @@ flowchart TD
 3. Add real mint addresses to `TOKEN_MINTS`
 4. Ensure policies are strict enough for real-value transactions
 5. Consider adding multi-sig or human-in-the-loop approval for high-value trades
+
+**Connecting external dApps:**
+1. Spawn an agent and click **"Connect dApp"** on its card in the dashboard
+2. Enter the dApp name (e.g., "Jupiter") and optional URL
+3. The session is created and the agent's public key is shared
+4. Use the `/api/wc/sign` endpoint to submit signing requests from the dApp
+5. The dashboard will prompt for approval; all external transactions require explicit human consent

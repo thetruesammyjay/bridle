@@ -52,7 +52,7 @@ Bridle was purpose-built to exceed the Superteam Nigeria "Agentic Wallets for AI
 
 ```mermaid
 graph TB
-    subgraph Interfaces["Interfaces & Outputs"]
+    subgraph Interfaces["Interfaces and Outputs"]
         UI["Web Dashboard (Vanilla JS/Tailwind)"]
         CLI["CLI Demo Tool"]
         TG["Telegram Notifications"]
@@ -62,6 +62,7 @@ graph TB
     subgraph Server["Express + WS Server"]
         API["REST API"]
         WS["Event Broadcast"]
+        WCS["dApp Connector (WalletConnectService)"]
     end
 
     subgraph Manager["Agent Manager"]
@@ -81,9 +82,10 @@ graph TB
         ANLY["Performance Analytics (P&L, Win Rate)"]
     end
 
-    subgraph Blockchain["External Networks"]
+    subgraph External["External Networks and dApps"]
         RPC["Solana Devnet RPC"]
         JUP["Jupiter Price API (Live Feeds)"]
+        DAPP["External Solana dApps"]
     end
 
     UI -->|REST / WS| Server
@@ -93,7 +95,11 @@ graph TB
     Manager --> Agents
     Manager -->|Push Alerts| TG
     Agents --> AgentInternals
-    AgentInternals --> Blockchain
+    AgentInternals --> RPC
+    AgentInternals --> JUP
+    DAPP -->|Sign Requests| WCS
+    WCS -->|Approval via WS| UI
+    WCS -->|Signs via| W
 ```
 
 ---
@@ -230,6 +236,7 @@ bridle/
 │   ├── trading/          # Jupiter swap integration
 │   ├── policy/           # Policy guards & audit logging
 │   ├── agent/            # Agent lifecycle management
+│   ├── walletconnect/    # dApp connector service
 │   └── server/           # Express + WebSocket server
 ├── dashboard/            # Real-time monitoring UI
 ├── data/                 # Runtime data (keys, logs)
