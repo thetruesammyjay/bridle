@@ -84,6 +84,36 @@ graph TB
 
 ---
 
+## Try it in 60 seconds
+
+No browser required. Paste these four commands and watch a live agent make autonomous trading decisions against real Jupiter price data.
+
+```bash
+git clone https://github.com/thetruesammyjay/bridle.git && cd bridle
+npm install
+cp .env.example .env
+# Open .env and set GEMINI_API_KEY + ENCRYPTION_PASSWORD, then:
+npm run demo
+```
+
+The CLI will create a wallet, request a devnet airdrop, fetch live SOL/USDC/BONK prices from Jupiter, run 3 AI decision cycles, and print the agent's reasoning — all in under a minute. No `.env` key? The rule-based fallback engine kicks in automatically, so it still runs.
+
+**What you'll see:**
+
+```
+  Cycle 1/3
+  · · · · · · · · · · · · · · · · · · · · · · · · ·
+  Market Trend: sideways (LIVE)
+  SOL: $152.25  |  BONK: $0.000026  |  RAY: $2.61
+  Decision:  HOLD   Confidence: 70%
+  "Market is trending sideways with mixed 24h signals.
+   Keeping position to avoid unnecessary slippage."
+```
+
+For the full dashboard experience (multi-agent, live P&L, dApp connector) run `npm run dev` instead and open `http://localhost:3000`.
+
+---
+
 ## Quick Start
 
 ### Prerequisites
