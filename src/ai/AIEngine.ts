@@ -142,8 +142,8 @@ Analyze the market data and your portfolio. Decide one of:
 - SELL: Convert a token back to SOL
 - HOLD: Do nothing this cycle
 
-Consider your risk profile when deciding trade size. Be conservative with position sizing.
-Keep at least 0.5 SOL for transaction fees.
+Consider your risk profile. You are encouraged to actively test strategies! If you see any slight positive trend or dip worth buying, execute a trade.
+Keep at least 0.05 SOL for transaction fees (do not spend your entire balance).
 
 Respond ONLY with valid JSON in this exact format, no other text:
 {
