@@ -237,13 +237,33 @@ export class Agent {
                     this.tradeHistory = this.tradeHistory.slice(-50);
                 }
 
+                // Estimate P&L: the outputAmount is denominated in the output token
+                // (e.g. USDC). Dividing by the current SOL price converts it back to
+                // SOL terms so we can compare apples-to-apples with inputAmount (SOL).
+                // On devnet, slippage in the simulated quote makes this slightly negative
+                // per trade — which accurately reflects real swap economics.
+                if (result.success && result.outputAmount > 0) {
+                    const currentSolPrice = marketData.prices['SOL'] || 150;
+                    const receivedValueSOL = result.outputAmount / currentSolPrice;
+                    const tradePnlSOL = receivedValueSOL - result.inputAmount;
+                    this.totalPnlSOL += tradePnlSOL;
+                }
+
                 // Update balance after trade
                 this.balanceSOL = await this.walletManager.getBalance(this.id);
+
+                // Broadcast live analytics so the dashboard stays in sync without polling
+                const successfulTrades = this.tradeHistory.filter(t => t.success);
+                const currentWinRate = this.tradeHistory.length > 0
+                    ? (successfulTrades.length / this.tradeHistory.length) * 100
+                    : 0;
 
                 this.emitEvent('agent:trade', {
                     result,
                     newBalance: this.balanceSOL,
                     cycle: this.cycleCount,
+                    realizedPnlSOL: this.totalPnlSOL,
+                    winRate: currentWinRate,
                 });
             }
 
@@ -308,9 +328,10 @@ export class Agent {
      */
     getState(): AgentState {
         const successfulTrades = this.tradeHistory.filter(t => t.success);
-        // Basic win rate assuming trades that increased overall PnL count as wins
-        const winRate = successfulTrades.length > 0 && this.totalPnlSOL > 0
-            ? 100 // Simplified: if overall profitable, 100% win rate for now as we don't track per-trade PnL yet
+        // Win rate = % of trade attempts that successfully executed on-chain.
+        // Policy violations and RPC errors reduce this; successful confirms raise it.
+        const winRate = this.tradeHistory.length > 0
+            ? (successfulTrades.length / this.tradeHistory.length) * 100
             : 0;
 
         return {

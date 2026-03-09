@@ -547,6 +547,30 @@ h6 {
   color: var(--accent);
 }
 
+.card-stat-value.profit {
+  color: var(--color-success);
+}
+
+.card-stat-value.loss {
+  color: var(--color-error);
+}
+
+.devnet-sim-badge {
+  display: inline-block;
+  background: rgba(234, 179, 8, 0.12);
+  color: #ca8a04;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  border: 1px solid rgba(234, 179, 8, 0.3);
+  font-family: var(--font-body);
+  vertical-align: middle;
+  cursor: default;
+}
+
 /* Decision Box */
 .card-decision {
   background: var(--bg-glass);

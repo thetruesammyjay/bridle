@@ -162,6 +162,9 @@ function handleAgentTrade(agentId, data, timestamp) {
     agent.totalTradesExecuted = agent.tradeHistory.filter(t => t.success).length;
     agent.balanceSOL = data.newBalance;
     agent.status = 'running';
+    // Apply live analytics broadcast from server so card reflects current P&L and win rate
+    if (typeof data.winRate === 'number') agent.winRate = data.winRate;
+    if (typeof data.realizedPnlSOL === 'number') agent.realizedPnlSOL = data.realizedPnlSOL;
     updateAgentCard(agent);
 
     // Flash the card
@@ -173,7 +176,7 @@ function handleAgentTrade(agentId, data, timestamp) {
 
     if (data.result.success) {
         addFeedItem('trade',
-            `<i class="bi bi-check-circle-fill" style="color:var(--color-success)"></i> <strong>${agent.name}</strong> traded ${data.result.inputAmount} ${data.result.inputToken} → ${data.result.outputToken} | <a href="https://explorer.solana.com/tx/${data.result.signature}?cluster=devnet" target="_blank">View Tx</a>`,
+            `<i class="bi bi-check-circle-fill" style="color:var(--color-success)"></i> <strong>${agent.name}</strong> traded ${data.result.inputAmount} ${data.result.inputToken} → ${data.result.outputToken} <span class="devnet-sim-badge" title="Real on-chain signature (devnet). Swap quote is simulated — actual token balances unchanged.">devnet sim</span> | <a href="https://explorer.solana.com/tx/${data.result.signature}?cluster=devnet" target="_blank">View Tx ↗</a>`,
             timestamp
         );
     } else {
@@ -347,9 +350,9 @@ function buildCardHTML(agent) {
           <span class="card-stat-value winrate-value">${agent.winRate?.toFixed(1) || 0}%</span>
         </div>
         <div class="card-stat">
-          <span class="card-stat-label">Realized P&L</span>
-          <span class="card-stat-value pnl-value ${agent.realizedPnlSOL >= 0 ? 'profit' : 'loss'}">
-            ${agent.realizedPnlSOL > 0 ? '+' : ''}${(agent.realizedPnlSOL || 0).toFixed(4)} SOL
+          <span class="card-stat-label">Realized P&L <span class="devnet-sim-badge" title="Estimated: received token value ÷ SOL price − amount spent. Based on simulated swap quotes.">sim</span></span>
+          <span class="card-stat-value pnl-value ${(agent.realizedPnlSOL || 0) >= 0 ? 'profit' : 'loss'}">
+            ${(agent.realizedPnlSOL || 0) > 0 ? '+' : ''}${(agent.realizedPnlSOL || 0).toFixed(4)} SOL
           </span>
         </div>
       </div>
