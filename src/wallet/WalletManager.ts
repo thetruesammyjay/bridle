@@ -115,52 +115,31 @@ export class WalletManager {
         }
     }
 
-    /**
-     * Request a devnet SOL airdrop for an agent's wallet.
-     * Retries with backoff on 429 errors; falls back to manual faucet instructions.
-     */
     async requestAirdrop(agentId: string, amountSOL: number = 1): Promise<string> {
         const publicKey = this.getPublicKey(agentId);
         if (!publicKey) throw new Error(`No wallet found for agent ${agentId}`);
 
-        const MAX_RETRIES = 3;
+        try {
+            const signature = await this.connection.requestAirdrop(
+                new PublicKey(publicKey),
+                amountSOL * LAMPORTS_PER_SOL
+            );
 
-        for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-            try {
-                if (attempt > 0) {
-                    const delay = 2000 * Math.pow(2, attempt - 1); // 2s, 4s, 8s
-                    console.log(`[WalletManager] Airdrop retry ${attempt}/${MAX_RETRIES} after ${delay}ms...`);
-                    await new Promise(resolve => setTimeout(resolve, delay));
-                }
+            // Wait for confirmation
+            const latestBlockhash = await this.connection.getLatestBlockhash();
+            await this.connection.confirmTransaction({
+                signature,
+                ...latestBlockhash,
+            });
 
-                const signature = await this.connection.requestAirdrop(
-                    new PublicKey(publicKey),
-                    amountSOL * LAMPORTS_PER_SOL
-                );
-
-                // Wait for confirmation
-                const latestBlockhash = await this.connection.getLatestBlockhash();
-                await this.connection.confirmTransaction({
-                    signature,
-                    ...latestBlockhash,
-                });
-
-                return signature;
-            } catch (error) {
-                const errStr = String(error);
-                if (errStr.includes('429') && attempt < MAX_RETRIES) {
-                    continue; // retry
-                }
-                if (errStr.includes('429')) {
-                    throw new Error(
-                        `Devnet airdrop rate limit reached. Visit https://faucet.solana.com to manually send SOL to: ${publicKey}`
-                    );
-                }
-                throw error;
-            }
+            return signature;
+        } catch (error) {
+            const errStr = String(error);
+            // Public Devnet RPCs often just fail with internal errors or rate limits for airdrops
+            throw new Error(
+                `Devnet airdrop failed or rate limited. Please visit https://faucet.solana.com to manually send SOL to: ${publicKey}`
+            );
         }
-
-        throw new Error('Airdrop failed after all retries');
     }
 
     /**
