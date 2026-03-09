@@ -89,7 +89,8 @@ graph TB
 ### Prerequisites
 
 - **Node.js** 20+ and npm
-- **Gemini API Key** — Get one at [Google AI Studio](https://aistudio.google.com/apikey)
+- **Gemini API Key** — Get a free key at [Google AI Studio](https://aistudio.google.com/app/apikey) (Free tier gives you 1,500 requests per day)
+- **Solana Devnet SOL** — You will need Devnet SOL to fund your agents. You can get free Devnet SOL from the [Solana Faucet](https://faucet.solana.com/)
 
 ### Installation
 
