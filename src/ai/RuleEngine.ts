@@ -54,7 +54,7 @@ export class RuleEngine {
         const momentum = (shortMA - longMA) / longMA;
 
         // Decision logic based on risk profile
-        const minBalance = 0.5; // Keep for fees
+        const minBalance = 0.05; // Keep for fees (reduced from 0.5 to encourage devnet testing)
 
         if (portfolio.balanceSOL <= minBalance) {
             return {
@@ -67,11 +67,26 @@ export class RuleEngine {
             };
         }
 
+        // Adjust momentum thresholds based on risk profile
+        let momentumThreshold = 0.02; // Moderate default
+        let balanceUsageBuy = 0.3;    // Moderate default (30%)
+        let balanceUsageSell = 0.2;   // Moderate default (20%)
+
+        if (riskProfile.level === 'aggressive') {
+            momentumThreshold = 0.01; // Trigger trades easier
+            balanceUsageBuy = 0.6;    // Use more balance
+            balanceUsageSell = 0.5;
+        } else if (riskProfile.level === 'conservative') {
+            momentumThreshold = 0.03; // Require stronger signals
+            balanceUsageBuy = 0.15;   // Use less balance
+            balanceUsageSell = 0.1;
+        }
+
         // Bullish signal: short MA above long MA + positive momentum
-        if (momentum > 0.02 && marketData.trend === 'bullish') {
+        if (momentum > momentumThreshold && marketData.trend === 'bullish') {
             const tradeSize = Math.min(
                 riskProfile.maxTradeSizeSOL,
-                (portfolio.balanceSOL - minBalance) * 0.3 // Use 30% of available balance
+                (portfolio.balanceSOL - minBalance) * balanceUsageBuy
             );
 
             if (tradeSize > 0.01) {
@@ -81,16 +96,16 @@ export class RuleEngine {
                     outputToken: 'USDC',
                     amountSOL: parseFloat(tradeSize.toFixed(4)),
                     confidence: Math.min(0.8, 0.5 + momentum * 5),
-                    reasoning: `Bullish signal: Short MA ($${shortMA.toFixed(2)}) > Long MA ($${longMA.toFixed(2)}), momentum: ${(momentum * 100).toFixed(2)}%. Market trend: ${marketData.trend}. Trading ${tradeSize.toFixed(4)} SOL.`,
+                    reasoning: `[${riskProfile.level.toUpperCase()}] Bullish signal: ShortMA>$${shortMA.toFixed(2)}, LongMA>$${longMA.toFixed(2)}. Momentum: ${(momentum * 100).toFixed(2)}%. Trading ${tradeSize.toFixed(4)} SOL.`,
                 };
             }
         }
 
         // Bearish signal: short MA below long MA + negative momentum
-        if (momentum < -0.02 && marketData.trend === 'bearish') {
+        if (momentum < -momentumThreshold && marketData.trend === 'bearish') {
             const tradeSize = Math.min(
                 riskProfile.maxTradeSizeSOL,
-                (portfolio.balanceSOL - minBalance) * 0.2 // Use 20% of available for sells
+                (portfolio.balanceSOL - minBalance) * balanceUsageSell
             );
 
             if (tradeSize > 0.01) {
@@ -100,7 +115,7 @@ export class RuleEngine {
                     outputToken: 'USDC',
                     amountSOL: parseFloat(tradeSize.toFixed(4)),
                     confidence: Math.min(0.7, 0.4 + Math.abs(momentum) * 5),
-                    reasoning: `Bearish signal: Short MA ($${shortMA.toFixed(2)}) < Long MA ($${longMA.toFixed(2)}), momentum: ${(momentum * 100).toFixed(2)}%. Market trend: ${marketData.trend}. Selling ${tradeSize.toFixed(4)} SOL to preserve value.`,
+                    reasoning: `[${riskProfile.level.toUpperCase()}] Bearish signal: ShortMA<$${shortMA.toFixed(2)}, LongMA<$${longMA.toFixed(2)}. Momentum: ${(momentum * 100).toFixed(2)}%. Selling ${tradeSize.toFixed(4)} SOL.`,
                 };
             }
         }
@@ -112,7 +127,7 @@ export class RuleEngine {
             outputToken: 'USDC',
             amountSOL: 0,
             confidence: 0.6,
-            reasoning: `No strong signal. Short MA: $${shortMA.toFixed(2)}, Long MA: $${longMA.toFixed(2)}, Momentum: ${(momentum * 100).toFixed(2)}%. Trend: ${marketData.trend}. Holding position.`,
+            reasoning: `[${riskProfile.level.toUpperCase()}] No strong signal (Threshold: ${(momentumThreshold * 100).toFixed(1)}%). Momentum: ${(momentum * 100).toFixed(2)}%. Holding.`,
         };
     }
 
