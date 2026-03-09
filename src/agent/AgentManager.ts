@@ -93,7 +93,7 @@ export class AgentManager {
             policy: partialConfig?.policy || {
                 maxTradeSOL: DEFAULT_RISK_PROFILES[partialConfig?.riskProfile || 'moderate'].maxTradeSizeSOL,
                 dailyLimitSOL: DEFAULT_RISK_PROFILES[partialConfig?.riskProfile || 'moderate'].dailyLimitSOL,
-                allowedTokens: ['SOL', 'USDC'],
+                allowedTokens: DEFAULT_RISK_PROFILES[partialConfig?.riskProfile || 'moderate'].preferredTokens,
                 cooldownMs: 10000, // 10 second cooldown between trades
             },
             intervalMs: partialConfig?.intervalMs || config.agent.intervalMs,
