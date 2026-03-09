@@ -120,7 +120,8 @@ For the full dashboard experience (multi-agent, live P&L, dApp connector) run `n
 
 - **Node.js** 20+ and npm
 - **Gemini API Key** — Get a free key at [Google AI Studio](https://aistudio.google.com/app/apikey) (Free tier gives you 1,500 requests per day)
-- **Solana Devnet SOL** — You will need Devnet SOL to fund your agents. You can get free Devnet SOL from the [Solana Faucet](https://faucet.solana.com/)
+- **Solana Devnet SOL** — You will need Devnet SOL to fund your agents. You can get free Devnet SOL from the [Solana Faucet](https://faucet.solana.com/). 
+  > **Note:** The Solana devnet RPC is frequently rate-limited for airdrops (Error 429). The Bridle dashboard will automatically fail fast and show a clean error message if the airdrop fails. If this happens, use the public faucet link above and send SOL directly to your agent's address.
 
 ### Installation
 
