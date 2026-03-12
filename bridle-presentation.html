@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bridle — Multi-Agent DeFi Autonomous Wallet Platform</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #0a0a0f;
+            --bg-card: #10111a;
+            --bg-card-hover: #171825;
+            --primary: #8b5cf6;
+            --primary-dim: #7c3aed;
+            --primary-glow: rgba(139, 92, 246, 0.25);
+            --primary-soft: rgba(139, 92, 246, 0.08);
+            --primary-light: #a78bfa;
+            --blue: #3b82f6;
+            --green: #10b981;
+            --amber: #f59e0b;
+            --red: #ef4444;
+            --pink: #ec4899;
+            --cyan: #06b6d4;
+            --orange: #f97316;
+            --text: #f0f0f5;
+            --text-dim: #a1a1b5;
+            --text-muted: #6b6b80;
+            --border: #1e1e2e;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', -apple-system, sans-serif;
+            overflow: hidden;
+            cursor: default;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* SLIDE SYSTEM */
+        .slide {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 80px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            transform: translateX(30px);
+        }
+
+        .slide.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(0);
+        }
+
+        .slide.exit-left {
+            opacity: 0;
+            transform: translateX(-30px);
+        }
+
+        /* TYPOGRAPHY */
+        h1 {
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.05;
+        }
+
+        h2 {
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            line-height: 1.15;
+        }
+
+        h3 {
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .text-primary {
+            color: var(--primary);
+        }
+
+        .text-primary-light {
+            color: var(--primary-light);
+        }
+
+        .text-dim {
+            color: var(--text-dim);
+        }
+
+        .text-muted {
+            color: var(--text-muted);
+        }
+
+        .text-green {
+            color: var(--green);
+        }
+
+        .text-blue {
+            color: var(--blue);
+        }
+
+        .text-amber {
+            color: var(--amber);
+        }
+
+        .glow-text {
+            text-shadow: 0 0 40px var(--primary-glow), 0 0 80px rgba(139, 92, 246, 0.1);
+        }
+
+        /* COMPONENTS */
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 28px;
+            border-radius: 100px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--text);
+            transition: all 0.3s;
+        }
+
+        .pill:hover {
+            border-color: var(--primary);
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+
+        .pill .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px 32px;
+            transition: all 0.3s;
+        }
+
+        .card:hover {
+            border-color: rgba(139, 92, 246, 0.3);
+            box-shadow: 0 4px 30px var(--primary-glow);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        /* NAV */
+        .nav {
+            position: fixed;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 100;
+            padding: 8px 16px;
+            background: rgba(16, 17, 26, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 100px;
+        }
+
+        .nav-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .nav-dot.active {
+            background: var(--primary);
+            box-shadow: 0 0 8px var(--primary-glow);
+            width: 24px;
+            border-radius: 4px;
+        }
+
+        .nav-counter {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-left: 12px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .key-hint {
+            position: fixed;
+            bottom: 28px;
+            right: 40px;
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+            z-index: 100;
+            opacity: 0.5;
+        }
+
+        .key-hint kbd {
+            display: inline-block;
+            padding: 2px 8px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: var(--bg-card);
+            margin: 0 2px;
+            font-size: 11px;
+        }
+
+        .underline-glow {
+            position: relative;
+            display: inline-block;
+        }
+
+        .underline-glow::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--primary-light));
+            border-radius: 2px;
+            box-shadow: 0 0 12px var(--primary-glow);
+        }
+
+        /* BACKGROUND EFFECTS */
+        .bg-grid {
+            position: absolute;
+            inset: 0;
+            background-image: linear-gradient(rgba(139, 92, 246, 0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(139, 92, 246, 0.025) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+        }
+
+        .bg-radial {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse 60% 50% at 50% 50%, rgba(139, 92, 246, 0.05) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .bg-corner-glow {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.12;
+            pointer-events: none;
+        }
+
+        /* ANIMATIONS */
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 0.6;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+
+        @keyframes glow-pulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 20px var(--primary-glow);
+            }
+
+            50% {
+                box-shadow: 0 0 40px var(--primary-glow), 0 0 60px rgba(139, 92, 246, 0.1);
+            }
+        }
+
+        .slide.active .anim-1 {
+            animation: fadeUp 0.6s 0.1s both;
+        }
+
+        .slide.active .anim-2 {
+            animation: fadeUp 0.6s 0.2s both;
+        }
+
+        .slide.active .anim-3 {
+            animation: fadeUp 0.6s 0.35s both;
+        }
+
+        .slide.active .anim-4 {
+            animation: fadeUp 0.6s 0.5s both;
+        }
+
+        .slide.active .anim-5 {
+            animation: fadeUp 0.6s 0.65s both;
+        }
+
+        .slide.active .anim-6 {
+            animation: fadeUp 0.6s 0.8s both;
+        }
+
+        /* DIAGRAM COMPONENTS */
+        .flow-arrow {
+            color: var(--primary);
+            font-size: 28px;
+            line-height: 1;
+            animation: pulse 2s infinite;
+        }
+
+        .node-box {
+            padding: 18px 28px;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            font-weight: 600;
+            font-size: 17px;
+            text-align: center;
+            min-width: 150px;
+            transition: all 0.3s;
+        }
+
+        .node-box:hover {
+            border-color: var(--primary);
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+
+        .node-box.accent {
+            border-color: var(--primary);
+            background: rgba(139, 92, 246, 0.08);
+        }
+
+        .node-box.green {
+            border-color: var(--green);
+            background: rgba(16, 185, 129, 0.08);
+        }
+
+        .node-box.blue {
+            border-color: var(--blue);
+            background: rgba(59, 130, 246, 0.08);
+        }
+
+        .node-box.amber {
+            border-color: var(--amber);
+            background: rgba(245, 158, 11, 0.08);
+        }
+
+        /* LAYOUTS */
+        .title-logo {
+            font-size: 112px;
+            background: linear-gradient(135deg, #fff 30%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-row {
+            display: flex;
+            gap: 60px;
+            align-items: flex-start;
+        }
+
+        .stat-block {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 88px;
+            font-weight: 900;
+            letter-spacing: -0.04em;
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 20px;
+            color: var(--text-dim);
+            margin-top: 10px;
+            font-weight: 500;
+        }
+
+        .arch-connector {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            padding: 10px 0;
+            color: var(--text-muted);
+            font-size: 24px;
+        }
+
+        .arch-label {
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 14px;
+        }
+
+        .arch-layer {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            flex-wrap: wrap;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(139, 92, 246, 0.3);
+            box-shadow: 0 4px 30px var(--primary-glow);
+        }
+
+        .feature-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+        }
+
+        .feature-title {
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .feature-desc {
+            font-size: 17px;
+            color: var(--text-dim);
+            line-height: 1.55;
+        }
+
+        .track-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 22px;
+            border-radius: 10px;
+            font-size: 17px;
+            font-weight: 600;
+            border: 1px solid;
+        }
+
+        .code-block {
+            background: #08080d;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px 28px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 15px;
+            line-height: 1.7;
+            color: var(--text-dim);
+            text-align: left;
+            overflow: hidden;
+        }
+
+        .code-keyword {
+            color: var(--primary);
+        }
+
+        .code-string {
+            color: var(--green);
+        }
+
+        .code-comment {
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .code-fn {
+            color: var(--blue);
+        }
+
+        .code-type {
+            color: var(--cyan);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ====== SLIDE 1: TITLE ====== -->
+    <div class="slide active">
+        <div class="bg-grid"></div>
+        <div class="bg-radial"></div>
+        <div class="bg-corner-glow" style="top: -200px; right: -200px; background: var(--primary);"></div>
+        <div class="bg-corner-glow" style="bottom: -200px; left: -100px; background: #6366f1; opacity: 0.08;"></div>
+
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 24px; text-align: center;">
+            <div class="anim-1" style="margin-bottom: 8px;">
+                <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                    <rect width="64" height="64" rx="16" fill="url(#logo-grad)" />
+                    <path d="M32 16L48 32L32 48L16 32L32 16Z" stroke="#fff" stroke-width="3" fill="none" />
+                    <circle cx="32" cy="32" r="6" fill="#fff" />
+                    <defs>
+                        <linearGradient id="logo-grad" x1="0" y1="0" x2="64" y2="64">
+                            <stop stop-color="#8b5cf6" />
+                            <stop offset="1" stop-color="#6d28d9" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+            <h1 class="title-logo anim-2 glow-text">Bridle</h1>
+            <p class="anim-3"
+                style="font-size: 28px; color: var(--text-dim); max-width: 720px; line-height: 1.5; font-weight: 400;">
+                Multi-Agent DeFi Autonomous Wallet Platform. AI agents that independently manage wallets and trade on
+                Solana.
+            </p>
+            <div class="anim-4"
+                style="display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; justify-content: center;">
+                <span class="track-badge"
+                    style="border-color: var(--primary); color: var(--primary-light); background: var(--primary-soft);">
+                    <span>🧠</span> AI Agents
+                </span>
+                <span class="track-badge"
+                    style="border-color: var(--blue); color: var(--blue); background: rgba(59,130,246,0.08);">
+                    <span>🔐</span> Autonomous Wallets
+                </span>
+                <span class="track-badge"
+                    style="border-color: var(--amber); color: var(--amber); background: rgba(245,158,11,0.08);">
+                    <span>📈</span> DeFi Trading
+                </span>
+            </div>
+            <p class="anim-5 mono" style="font-size: 14px; color: var(--text-muted); margin-top: 12px;">
+                Superteam Nigeria &middot; Developer Challenge
+            </p>
+        </div>
+    </div>
+
+    <!-- ====== SLIDE 2: THE PROBLEM ====== -->
+    <div class="slide">
+        <div class="bg-grid"></div>
+        <div class="bg-corner-glow" style="top: -150px; left: -150px; background: var(--red); opacity: 0.1;"></div>
+
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 48px; text-align: center;">
+            <div class="anim-1">
+                <span class="badge" style="background: rgba(239, 68, 68, 0.12); color: var(--red);">THE PROBLEM</span>
+            </div>
+            <h2 class="anim-2" style="font-size: 54px; max-width: 860px;">
+                Manual Trading is Slow, Bots are <span class="text-primary underline-glow">Rigid</span>
+            </h2>
+            <div class="stat-row anim-3">
+                <div class="stat-block">
+                    <div class="stat-number text-primary">0</div>
+                    <div class="stat-label">AI reasoning in simple bots</div>
+                </div>
+                <div class="stat-block">
+                    <div class="stat-number" style="color: var(--red);">🔓</div>
+                    <div class="stat-label">Wallet keys scattered</div>
+                </div>
+                <div class="stat-block">
+                    <div class="stat-number text-primary">Blind</div>
+                    <div class="stat-label">No observability into actions</div>
+                </div>
+            </div>
+            <p class="anim-5" style="font-size: 22px; color: var(--text-dim); max-width: 720px; line-height: 1.6;">
+                DeFi trading moves fast. Simple bots lack intelligent reasoning, and giving an AI full control over a
+                wallet is dangerous without secure infrastructure, observability, and strict risk controls.
+            </p>
+        </div>
+    </div>
+
+    <!-- ====== SLIDE 3: THE SOLUTION ====== -->
+    <div class="slide">
+        <div class="bg-grid"></div>
+        <div class="bg-radial"></div>
+
+        <div
+            style="display: flex; flex-direction: column; align-items: center; gap: 40px; text-align: center; width: 100%; max-width: 1000px;">
+            <div class="anim-1">
+                <span class="badge" style="background: var(--primary-soft); color: var(--primary-light);">THE
+                    SOLUTION</span>
+            </div>
+            <h2 class="anim-2" style="font-size: 52px;">Meet Bridle</h2>
+
+            <div class="anim-3 card" style="text-align: left; width: 100%; max-width: 800px;">
+                <p style="font-size: 20px; color: var(--text-dim); line-height: 1.7;">
+                    An autonomous wallet platform where AI agents (powered by Google Gemini) manage Solana wallets. They
+                    analyze live market data, execute trading decisions autonomously, and respect system policy guards.
+                </p>
+            </div>
+
+            <div class="anim-4" style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;">
+                <div class="pill"><span class="dot" style="background: var(--green);"></span> Secure Management</div>
+                <div class="pill"><span class="dot" style="background: var(--blue);"></span> AI Decisions</div>
+                <div class="pill"><span class="dot" style="background: var(--amber);"></span> Full Audit Trail</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== SLIDE 4: ARCHITECTURE ====== -->
+    <div class="slide">
+        <div class="bg-grid"></div>
+
+        <div
+            style="display: flex; flex-direction: column; align-items: center; gap: 32px; width: 100%; max-width: 960px;">
+            <div class="anim-1">
+                <span class="badge"
+                    style="background: var(--primary-soft); color: var(--primary-light);">ARCHITECTURE</span>
+            </div>
+            <h2 class="anim-2" style="font-size: 44px;">Platform Overview</h2>
+
+            <div class="anim-3"
+                style="display: flex; flex-direction: column; align-items: center; gap: 0; width: 100%;">
+                <div style="display: flex; gap: 24px; align-items: center;">
+                    <div class="node-box" style="font-size: 16px;">💻 Web Dashboard</div>
+                    <div class="node-box" style="font-size: 16px;">⌨️ CLI Demo</div>
+                </div>
+                <div class="arch-connector"><span>↓</span><span style="font-size: 14px;">REST API / WebSockets</span>
+                </div>
+
+                <div class="node-box accent"
+                    style="font-size: 18px; min-width: 300px; animation: glow-pulse 3s infinite;">
+                    ⚙️ Agent Manager
+                </div>
+                <div class="arch-connector"><span>↓</span><span style="font-size: 14px;">Spawns & Monitors</span></div>
+
+                <div style="display: flex; gap: 24px; align-items: center;">
+                    <div class="node-box green" style="font-size: 16px; min-width: 180px;">🤖 Agent 1</div>
+                    <div class="node-box blue" style="font-size: 16px; min-width: 180px;">🤖 Agent 2</div>
+                    <div class="node-box amber" style="font-size: 16px; min-width: 180px;">🤖 Agent N</div>
+                </div>
+
+                <div class="arch-connector"><span>↓</span></div>
+
+                <div style="display: flex; gap: 24px; align-items: center;">
+                    <div class="node-box" style="font-size: 16px;">Solana Devnet</div>
+                    <div class="node-box" style="font-size: 16px;">Jupiter API</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== SLIDE 5: SECURITY & WALLETS ====== -->
+    <div class="slide">
+        <div class="bg-grid"></div>
+        <div class="bg-corner-glow" style="bottom: -200px; right: -200px; background: var(--green); opacity: 0.1;">
+        </div>
+
+        <div
+            style="display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; width: 100%; max-width: 1060px;">
+            <div style="display: flex; flex-direction: column; gap: 24px;">
+                <div class="anim-1">
+                    <span class="badge"
+                        style="background: rgba(16, 185, 129, 0.12); color: var(--green);">SECURITY</span>
+                </div>
+                <h2 class="anim-2" style="font-size: 46px;">Encrypted KeyVault</h2>
+                <p class="anim-3" style="font-size: 20px; color: var(--text-dim); line-height: 1.7;">
+                    Keys never exist in plaintext at rest. Bridle ensures every agent's wallet is completely isolated
+                    and secure.
+                </p>
+                <div class="anim-4" style="display: flex; flex-direction: column; gap: 16px;">
+                    <div style="display: flex; align-items: center; gap: 14px;">
+                        <span style="font-size: 18px; color: var(--text-dim);">🛡️ AES-256-GCM encryption</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 14px;">
+                        <span style="font-size: 18px; color: var(--text-dim);">🔑 PBKDF2 derived keys (100k
+                            iterations)</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 14px;">
+                        <span style="font-size: 18px; color: var(--text-dim);">🗑️ Secure deletion & wiping from
+                            memory</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- diagram -->
+            <div class="anim-5" style="position: relative;">
+                <div style="display: flex; flex-direction: column; gap: 0; align-items: center;">
+                    <div class="node-box green" style="width: 280px;">Key Generation</div>
+                    <div class="arch-connector"><span>↓</span></div>
+                    <div class="node-box" style="width: 280px; border-color: var(--amber);">Encrypted Blob</div>
+                    <div class="arch-connector"><span>↓</span></div>
+                    <div class="node-box green" style="width: 280px;">Sign & Wipe</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== SLIDE 6: POLICIES ====== -->
+    <div class="slide">
+        <div class="bg-grid"></div>
+
+        <div
+            style="display: flex; flex-direction: column; align-items: center; gap: 32px; width: 100%; max-width: 960px;">
+            <div class="anim-1">
+                <span class="badge" style="background: rgba(239, 68, 68, 0.12); color: var(--red);">GUARDS</span>
+            </div>
+            <h2 class="anim-2" style="font-size: 44px;">Policy Guards</h2>
+            <p class="anim-3" style="font-size: 20px; color: var(--text-dim); text-align: center;">
+                Even intelligent AI can make mistakes. Bridle wraps agents in strict boundaries to prevent catastrophic
+                losses.
+            </p>
+
+            <div class="anim-4 feature-card"
+                style="width: 100%; max-width: 800px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <h3 class="text-primary" style="margin-bottom: 12px;">Limits & Caps</h3>
+                    <p class="text-dim">Per-agent spending limits and daily maximum transaction caps.</p>
+                </div>
+                <div>
+                    <h3 class="text-primary" style="margin-bottom: 12px;">Token Whitelists</h3>
+                    <p class="text-dim">Agents can only trade approved tokens (SOL, USDC, BONK, etc).</p>
+                </div>
+                <div>
+                    <h3 class="text-primary" style="margin-bottom: 12px;">Cooldown Periods</h3>
+                    <p class="text-dim">Enforced minimum time between trades to prevent frantic trading.</p>
+                </div>
+                <div>
+                    <h3 class="text-primary" style="margin-bottom: 12px;">Immutable Audit</h3>
+                    <p class="text-dim">Append-only JSONL logs for every single decision, trade, and error.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== SLIDE 7: OBSERVABILITY & DASHBOARD ====== -->
+    <div class="slide">
+        <div class="bg-grid"></div>
+        <div class="bg-corner-glow" style="top: -200px; right: -200px; background: var(--cyan); opacity: 0.1;"></div>
+
+        <div
+            style="display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; width: 100%; max-width: 1100px;">
+            <div style="display: flex; flex-direction: column; gap: 24px;">
+                <div class="anim-1">
+                    <span class="badge"
+                        style="background: rgba(6, 182, 212, 0.12); color: var(--cyan);">DASHBOARD</span>
+                </div>
+                <h2 class="anim-2" style="font-size: 44px;">Real-Time Observability</h2>
+                <p class="anim-3" style="font-size: 19px; color: var(--text-dim); line-height: 1.7;">
+                    Monitor multiple agents working in parallel. Every decision cycle and trade is pushed via
+                    WebSockets.
+                </p>
+                <div class="anim-4" style="display: flex; flex-direction: column; gap: 14px;">
+                    <span class="text-dim">→ P&L and Win Rates</span>
+                    <span class="text-dim">→ Live Wallet Balances</span>
+                    <span class="text-dim">→ Activity Feeds</span>
+                    <span class="text-dim">→ Agent Confidences & Thoughts</span>
+                </div>
+            </div>
+
+            <div class="anim-5" style="position: relative;">
+                <div class="card"
+                    style="padding: 0; overflow: hidden; border-color: rgba(6, 182, 212, 0.25); background: #08080d; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
+                    <div
+                        style="padding: 10px 14px; border-bottom: 1px solid rgba(6, 182, 212, 0.2); color: var(--cyan);">
+                        BRIDLE HUD</div>
+                    <div style="padding: 14px;">
+                        <div style="color: var(--green); margin-bottom: 6px;">[Agent Alpha] Decision: HOLD (70% conf)
+                        </div>
+                        <div style="color: var(--text-dim); margin-bottom: 12px;">"Market side-ways, avoiding slippage."
+                        </div>
+                        <div style="color: var(--blue); margin-bottom: 6px;">[Agent Beta] Decision: BUY (85% conf)</div>
+                        <div style="color: var(--text-dim);">"Strong SOL uptrend detected, buying 0.1 SOL."</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== SLIDE 8: DATA FLOW ====== -->
+    <div class="slide">
+        <div class="bg-grid"></div>
+        <div class="bg-radial"></div>
+
+        <div
+            style="display: flex; flex-direction: column; align-items: center; gap: 32px; width: 100%; max-width: 1000px;">
+            <div class="anim-1">
+                <span class="badge" style="background: var(--primary-soft); color: var(--primary-light);">DATA
+                    FLOW</span>
+            </div>
+            <h2 class="anim-2" style="font-size: 44px;">The Agent Decision Cycle</h2>
+
+            <div class="anim-3"
+                style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: center;">
+                <div class="node-box" style="font-size: 15px; min-width: 140px;">
+                    📊 Live Jupiter Prices
+                </div>
+                <span class="flow-arrow">→</span>
+                <div class="node-box accent" style="font-size: 15px; min-width: 140px;">
+                    🧠 Gemini AI Model
+                </div>
+                <span class="flow-arrow">→</span>
+                <div class="node-box blue" style="font-size: 15px; min-width: 140px;">
+                    ⚙️ Bridle Policy Guard
+                </div>
+                <span class="flow-arrow">→</span>
+                <div class="node-box green" style="font-size: 15px; min-width: 140px;">
+                    ⛓️ Solana Execution
+                </div>
+            </div>
+
+            <div class="anim-4 text-dim text-center" style="max-width: 700px; font-size: 18px; margin-top: 20px;">
+                Configurable agent instances are spun up on intervals. They query oracle prices, analyze charts, produce
+                structured JSON outputs determining their trades, and execute on the Solana network via encrypted key
+                storage.
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== SLIDE 9: DAPP CONNECTOR ====== -->
+    <div class="slide">
+        <div class="bg-grid"></div>
+
+        <div
+            style="display: flex; flex-direction: column; align-items: center; gap: 32px; width: 100%; max-width: 960px;">
+            <div class="anim-1">
+                <span class="badge"
+                    style="background: rgba(139, 92, 246, 0.12); color: var(--primary);">INTEGRATION</span>
+            </div>
+            <h2 class="anim-2" style="font-size: 44px;">dApp Connector (WalletConnect)</h2>
+            <p class="anim-3" style="font-size: 20px; color: var(--text-dim); text-align: center;">
+                Connect external Solana dApps to agent wallets. Allow agents to interact with external smart contracts.
+            </p>
+
+            <div class="anim-4" style="display: flex; gap: 32px; align-items: center; justify-content: center;">
+                <div class="node-box">External dApp</div>
+                <div class="text-primary font-bold">⇄</div>
+                <div class="node-box accent">Bridle WalletConnect</div>
+                <div class="text-primary font-bold">⇄</div>
+                <div class="node-box green">Explicit App Approval</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== SLIDE 10: COMPETITIVE EDGE ====== -->
+    <div class="slide">
+        <div class="bg-grid"></div>
+        <div class="bg-corner-glow" style="bottom: -200px; right: -200px; background: var(--blue); opacity: 0.08;">
+        </div>
+
+        <div
+            style="display: flex; flex-direction: column; align-items: center; gap: 36px; width: 100%; max-width: 1000px;">
+            <div class="anim-1">
+                <span class="badge" style="background: rgba(59, 130, 246, 0.12); color: var(--blue);">WHY BRIDLE</span>
+            </div>
+            <h2 class="anim-2" style="font-size: 46px;">The Competitive Edge</h2>
+
+            <div class="anim-3"
+                style="width: 100%; overflow: hidden; border-radius: 16px; border: 1px solid var(--border);">
+                <table style="width: 100%; border-collapse: collapse; font-size: 17px;">
+                    <thead>
+                        <tr style="background: var(--bg-card);">
+                            <th style="padding: 18px 24px; text-align: left;"></th>
+                            <th
+                                style="padding: 18px 24px; text-align: center; color: var(--primary); background: rgba(139,92,246,0.06);">
+                                Bridle Platform</th>
+                            <th style="padding: 18px 24px; text-align: center; color: var(--text-dim);">Standard Bots
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="padding: 16px 24px; border-bottom: 1px solid var(--border);">Decision Logic</td>
+                            <td
+                                style="padding: 16px 24px; border-bottom: 1px solid var(--border); text-align: center; background: rgba(139,92,246,0.03);">
+                                <span class="text-green">LLM Reasoning (Gemini)</span></td>
+                            <td style="padding: 16px 24px; border-bottom: 1px solid var(--border); text-align: center;">
+                                <span class="text-amber">Hardcoded logic</span></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 16px 24px; border-bottom: 1px solid var(--border);">Wallet Key Storage
+                            </td>
+                            <td
+                                style="padding: 16px 24px; border-bottom: 1px solid var(--border); text-align: center; background: rgba(139,92,246,0.03);">
+                                <span class="text-green">AES-256-GCM Encrypted at rest</span></td>
+                            <td style="padding: 16px 24px; border-bottom: 1px solid var(--border); text-align: center;">
+                                <span class="text-red">Plaintext .env keys</span></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 16px 24px; border-bottom: 1px solid var(--border);">Observability</td>
+                            <td
+                                style="padding: 16px 24px; border-bottom: 1px solid var(--border); text-align: center; background: rgba(139,92,246,0.03);">
+                                <span class="text-green">Real-time Web UI, Logs & Feed</span></td>
+                            <td style="padding: 16px 24px; border-bottom: 1px solid var(--border); text-align: center;">
+                                <span class="text-red">Blind Terminal Output</span></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 16px 24px; border-bottom: 1px solid var(--border);">Policy Guards</td>
+                            <td
+                                style="padding: 16px 24px; border-bottom: 1px solid var(--border); text-align: center; background: rgba(139,92,246,0.03);">
+                                <span class="text-green">Built-in Caps, Cooldowns, Audits</span></td>
+                            <td style="padding: 16px 24px; border-bottom: 1px solid var(--border); text-align: center;">
+                                <span class="text-red">No native protections</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== SLIDE 11: CTA / CLOSE ====== -->
+    <div class="slide">
+        <div class="bg-grid"></div>
+        <div class="bg-radial"></div>
+        <div class="bg-corner-glow" style="top: -200px; right: -200px; background: var(--primary);"></div>
+        <div class="bg-corner-glow"
+            style="bottom: -200px; left: -150px; background: var(--primary-dim); opacity: 0.08;"></div>
+
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 32px; text-align: center;">
+            <h1 class="anim-2 glow-text"
+                style="font-size: 80px; background: linear-gradient(135deg, #fff 30%, var(--primary) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                Bridle
+            </h1>
+            <p class="anim-3" style="font-size: 26px; color: var(--text-dim); max-width: 620px; line-height: 1.5;">
+                The Multi-Agent Autonomous Wallet Platform.<br>
+                <strong style="color: var(--text);">Give your AI agents a secure place to live and trade.</strong>
+            </p>
+
+            <div class="anim-4" style="display: flex; gap: 16px; margin-top: 16px;">
+                <a href="https://github.com/thetruesammyjay/bridle" target="_blank" style="text-decoration: none;">
+                    <div class="pill" style="cursor: pointer; font-size: 18px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                        </svg>
+                        github.com/thetruesammyjay/bridle
+                    </div>
+                </a>
+            </div>
+
+            <div class="anim-5"
+                style="display: flex; gap: 12px; margin-top: 8px; flex-wrap: wrap; justify-content: center;">
+                <span class="track-badge"
+                    style="border-color: var(--primary); color: var(--primary-light); background: var(--primary-soft);">
+                    🚀 npm run demo
+                </span>
+                <span class="track-badge"
+                    style="border-color: var(--amber); color: var(--amber); background: rgba(245, 158, 11, 0.08);">
+                    🌐 npm run dev
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== NAVIGATION ====== -->
+    <div class="nav" id="nav"></div>
+    <div class="key-hint"><kbd>←</kbd> <kbd>→</kbd> or click</div>
+
+    <script>
+        (function () {
+            const slides = document.querySelectorAll('.slide');
+            const nav = document.getElementById('nav');
+            let current = 0;
+            const total = slides.length;
+
+            for (let i = 0; i < total; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+                dot.dataset.index = i;
+                dot.onclick = () => goTo(i);
+                nav.appendChild(dot);
+            }
+            const counter = document.createElement('span');
+            counter.className = 'nav-counter';
+            counter.textContent = `1 / ${total}`;
+            nav.appendChild(counter);
+
+            function goTo(n) {
+                if (n < 0 || n >= total || n === current) return;
+                slides[current].classList.remove('active');
+                slides[current].classList.add('exit-left');
+                const prev = current; current = n;
+                slides[current].querySelectorAll('[class*="anim-"]').forEach(el => {
+                    el.style.animation = 'none'; el.offsetHeight; el.style.animation = '';
+                });
+                slides[current].classList.add('active');
+                nav.querySelectorAll('.nav-dot').forEach((d, i) => { d.classList.toggle('active', i === current); });
+                counter.textContent = `${current + 1} / ${total}`;
+                setTimeout(() => { slides[prev].classList.remove('exit-left'); }, 500);
+            }
+
+            document.addEventListener('keydown', e => {
+                if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); goTo(current + 1); }
+                if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); goTo(current - 1); }
+                if (e.key === 'Home') { e.preventDefault(); goTo(0); }
+                if (e.key === 'End') { e.preventDefault(); goTo(total - 1); }
+            });
+
+            let touchStartX = 0;
+            document.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; });
+            document.addEventListener('touchend', e => {
+                const diff = touchStartX - e.changedTouches[0].screenX;
+                if (Math.abs(diff) > 50) { diff > 0 ? goTo(current + 1) : goTo(current - 1); }
+            });
+        })();
+    </script>
+</body>
+
+</html>
